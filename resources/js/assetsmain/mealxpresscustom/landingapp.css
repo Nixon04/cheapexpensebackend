@@ -1,0 +1,136 @@
+:root {
+    --bg-state: #000;
+    --bg-primary-main: #2D2942;
+    --bg-primary-light: #443D65;
+    --bg-secondary-meal: #E26900;
+    --bg-hover-main: #f1f1f1;
+    --bg-border-first: #E6F5F9;
+    --bg-border-second: #EFFCEF;
+    --bg-border-third: #EFF6FC;
+}
+.bg-footer{
+    height: auto;
+    width: 100%;
+    background: var(--bg-primary-main);
+}
+.highlight{
+    height: 0.3px;
+    width: 100%;
+    background: var(--bg-primary-main);
+}
+.bg-align-center{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.optionview{
+    height: auto;
+}
+.bg-card-longivity{
+height: 78vh!important;
+width: 100%;
+}
+.bg-px-space{
+    margin: 100px;
+}
+.bg-footer-link{
+    color: var(--bg-hover-main);
+}
+.bg-footer-link:hover, .bg-footer-link:focus{
+    color: var(--bg-hover-main);
+}
+.img-contain{
+    max-width: 150px;
+}
+
+.bg-flex-medium{
+position: absolute;
+top: 20%;
+left: 50%;
+transform: translate(-50%, -20%);
+}
+.infobuttonaction{
+    padding: 20px;
+    background: var(--bg-hover-main);
+    margin: auto; 
+    font-size: 20px;
+    border-radius: 12px;
+    color: #000;
+}
+.infobuttonaction:hover{
+    color: #000;
+}
+.bg-largermeal{
+    font-size: 60px;
+}
+.starter-align{
+    display: flex;
+    flex-direction: column;
+    text-align: start;
+    padding: 30px;
+}
+.flexwrap-container{
+    display: flex;
+    flex-wrap: wrap;
+}
+.card-mutate-swig{
+top: 75%;
+left: 50%;
+transform: translate(-50%, -70%);
+width: 80%;   
+height: auto!important; 
+}
+.flexleft{
+    height: auto;
+    flex: 1;
+    width: 100%;
+}
+.flexright{
+    height: auto;
+    flex: 1;
+    width: 100%;    
+}
+.padding-top-motion{
+ padding-top: 50px;   
+}
+.flexleftcontent{
+    height: auto;
+    flex: 30;
+    width: 100%;   
+}
+.flexrightcontent{
+    height: auto;
+    flex: 70;
+    width: 100%;   
+}
+.bg-dynamic-image{
+    width: 100%;
+}
+.hero-section-header{
+    position: relative;
+    height: auto;
+    width: 100%;
+}
+
+.hero-section-bgheader{
+    display: flex;
+    justify-content: center;
+}
+.infobutton{
+    background: var(--bg-border-third);
+    padding: 15px;
+    border-radius: 10px;
+    width: auto;
+}
+.bg-bigger{
+    font-size: 10.5rem;
+}
+.bg-font-note{
+    font-size: 4.4rem;
+}
+.bg-main-color{
+    background: var(--bg-primary-main)!important;
+}
+.bg-secondarycolor{
+ color: var(--bg-secondary-meal);
+}

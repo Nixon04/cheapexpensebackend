@@ -1,0 +1,78 @@
+@media (max-width: 800px){
+    .flex-left-state, .flex-right-state{
+        flex: 100%;
+    }
+    .login-container-set{
+        width: 90%!important;
+        padding: 2.5rem;
+    }   
+    .aside-mealxpress{
+        display: block!important;
+        width: 250px!important;
+        z-index: 999;
+      }
+}
+
+@media(min-width:1124px){
+    .toggle-button {
+        display: none; 
+      }
+      
+}
+
+@media(max-width:1124px){
+    .aside-mealxpress{
+        display: none!important;
+        width: 250px!important;
+        z-index: 999;
+    }
+    .bg-transfer-padding-all{
+        width: 80%;
+    }
+    .bg-dynamic-image{
+        width: 60%;
+    }
+    .bg-drawer-center-container{
+        height: 100%;
+        width: 100%;
+        border-radius: 0px;
+    }
+    .bg-bigger{
+        font-size: 3em!important;
+    }
+    .bg-font-note{
+        font-size: 1em!important;
+    }
+    .flexright, .flexleft{
+        flex: 100%;
+    }
+    .flexleftcontent, .flexrightcontent{
+        flex: 100%;
+    }
+    .bg-largermeal{
+        font-size: 30px;
+    }
+    
+    .bg-px-space{
+        margin: 20px;
+    }
+
+    .card-mutate-swig{
+        width: 90%;
+        top: 75%;
+    }
+    .bg-dialog-pad{
+        width: 90%;
+    }
+    .mealxpress-content{
+        margin-left: 0!important;
+        width: 100%;
+    }
+    .mealxpress-header{
+        width: calc(100% - 0px)!important;
+        left: 0;
+    }
+    .deletepadding{
+        width: 70%;
+    }
+}

@@ -1,0 +1,41 @@
+/* Dashboard Layout */
+.main-board-mealxpress {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+  }
+  
+  .aside-mealxpress {
+    width: 250px;
+    background-color: var(--bg-primary-main);
+    color: #fff;
+    padding: 20px;
+    height: 100vh;
+  }
+  
+  header {
+    background-color: #f4f4f4;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .mealxpress-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary-meal);
+  }
+  
+  .mealxpress-header {
+    background-color: #fff;
+    padding: 20px;
+    border-bottom: 1px solid #000;
+  }
+  
+  .mealxpress-main {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+  }
+

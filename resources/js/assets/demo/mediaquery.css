@@ -1,0 +1,15 @@
+@media(max-width:800px){
+    .hero-left-pad, .hero-right-pad{
+        flex: 100%!important;
+    }
+    .hero-main-content{
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: 0;
+        margin: 1rem;
+        border-radius: 25px;
+        padding: 20px!important;
+    }
+}
