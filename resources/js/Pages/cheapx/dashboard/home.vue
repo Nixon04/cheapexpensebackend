@@ -37,7 +37,7 @@
                                         <i class="fa-solid fa-arrow-up-long"></i>
                                         +5%
                                       </div>
-                                      <span>Vs Last Month</span>
+                                      <span>Vs Last Month(s)</span>
                                     </div>
                                    </div>
                                   <Link href="">
