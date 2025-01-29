@@ -4,7 +4,7 @@
     <div class="main-body-content bg-main-color">
       <div class="p-5 bg-alert-msg position-relative bg-main-color">
          <div class="alert-msg-content text-center">
-            <h4 class="fs-1 text-dark bg-font-big text-white">Enjoy seamless top up with ease and safety </h4>
+            <h4 class="fs-1 text-dark bg-font-big text-white">Enjoy seamless top up with ease and safety at its core </h4>
               <h6 class="text-mute text-white">Cheapexpense is your goto version for easier top up to your airtime, data subscription, never miss a day subscribing to your 
                 favourite Tv show, or go blanked out on your Electricity bills. 
               </h6>
