@@ -7,7 +7,7 @@
     <title>Document</title>
 </head>
 <body>
-    <p>hello your pin is {{ $tokencode }}</p>
+    <p>hello your pin is {{ $tokencode }} Notified</p>
     
 </body>
 </html>
