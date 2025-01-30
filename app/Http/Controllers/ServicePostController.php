@@ -11,6 +11,7 @@ use App\Models\Transactions;
 use App\Models\UserSignup;
 use App\Models\UserAccountDetails;
 use App\Models\VirtualAccounts;
+use Illuminate\Support\Facades\DB;
 use App\Models\CablePackages;
 use Illuminate\Support\Facades\Log;
 
@@ -112,6 +113,7 @@ class ServicePostController extends Controller
     //    }
     }
 
+  
     public function Webhook(Request $request){
         $paymentDetails = $request->getContent();
 
@@ -126,10 +128,10 @@ class ServicePostController extends Controller
         // Get Paystack signature header
         $paystackSignature = $request->header('x-paystack-signature');
 
-        // define('TEST_PAYSTACK_KEY', env('TEST_PAYSTACK_KEY'));
-        // if ($paystackSignature f!== hash_hmac('sha512', $paymentDetails, TEST_PAYSTACK_KEY)) {
-        //     return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 400);
-        // }
+        define('SECOND_SECRET_KEY', env('SECOND_SECRET_KEY'));
+        if ($paystackSignature !== hash_hmac('sha512', $paymentDetails, SECOND_SECRET_KEY)) {
+            return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 400);
+        }
 
         $result= json_decode($paymentDetails);
 
@@ -146,6 +148,140 @@ class ServicePostController extends Controller
         }
     }
 
+      
+        if($result->event == "transfer.success"){
+            
+       try{
+            
+          $amount = $result->data->amount;
+          $reference_id = $result->data->reference;
+          $status = $result->data->status;
+          
+          Log::info('all_status', ['status' => $status, 'amount' => $amount, 'reference' => $reference_id]);
+         $validatetransfer = Transactions::where('reference', $reference_id)->first();
+         if($validatetransfer){
+             $validatetransfer->update(['data_type' => 'Transfer', 'status' => $status]);
+             Log::info('info', ['statusreport' => 'Already found']);
+             return;
+         }else{
+            
+               Log::info('info', ['statusreport' => ' status log']);
+               return;
+         }
+         
+       }catch(\Exception $e){
+         Log::info('reference', ['delug' => $e->getMessage()]);
+     }
+        }
+         
+        
+    
+        else if($result->event == "transfer.failed"){
+             $amount = $result->data->amount / 100;
+          $reference_id = $result->data->reference;
+          $status = $result->data->status;
+         
+          $validatetransfer = Transactions::where('reference', $reference_id)->first();
+         if($validatetransfer){
+             $validatetransfer->update(['data_type' => 'Transfer', 'status' => $status]);
+             Log::info('info', ['statusreport' => 'Already found']);
+             return;
+         }else{
+            
+               Log::info('info', ['statusreport' => ' status log']);
+               return;
+         }
+         
+     }else if($result->event == "transfer.reversed"){
+          $amount = $result->data->amount / 100;
+          $reference_id = $result->data->reference;
+          $status = $result->data->status;
+         $validatetransfer =Transactions::where('reference', $reference_id);
+         $validatetransfer = Transactions::where('reference', $reference_id)->first();
+         if($validatetransfer){
+             $validatetransfer->update(['data_type' => 'Transfer', 'status' => $status]);
+             
+            //  refunding user money back to his/her main wallet
+             
+              $trackrefuser = Transactions::where('reference', $reference_id)->first();
+              
+             if($trackrefuser){
+                 $username  = $trackrefuser->username;
+                 
+                 $updateuseramount = UserAccountDetails::where('username', $username)->first();
+                 if($updateuseramount){
+                     $newamount = $updateuseramount->user_amount + $amount;
+                     $updateuseramount->update(['user_amount' => $newamount ]);
+                 }
+                 
+         }
+         
+             Log::info('info', ['statusreport' => 'Already found']);
+             return;
+         }else{
+            
+               Log::info('info', ['statusreport' => ' status log']);
+               return;
+         }
+         
+        
+      
+     }
+     
+     
+    //  charge for virtual payment slip
+    
+    
+    else if($result->event == "charge.success"){
+    $amount = $result->data->amount / 100;
+    $reference = $result->data->reference;
+    $status = $result->data->status;
+    $username = $result->data->customer->first_name;
+    $customer_ref_id = $result->data->customer->customer_code;
+    
+    $notify_transaction_ref = Transactions::where('reference', $reference)->first();
+
+    Log::info('reference', ['referenceLog' => $notify_transaction_ref->reference ?? "Nothing was found", 'initialref' => $reference]);
+    
+    try{
+    
+    if(!$notify_transaction_ref){
+    
+    $date = Carbon::now()->setTimeZone('Africa/Lagos')->format('d M Y h:i A');    
+        
+    $useramountupdate = UserAccountDetails::where('username', $username)->first();
+    if($useramountupdate){
+        $newamount = $useramountupdate->user_amount + $amount;
+        $useramountupdate->update(['user_amount' => $newamount]);
+    }
+    
+      $transaction_data = new Transactions();
+         $transaction_data->username = $username;
+         $transaction_data->amount = $amount;
+         $transaction_data->type_of_purchase = 'VirtualWallet';
+         $transaction_data->sub_type_purchase = "AutoFund";
+         $transaction_data->data_type = "Virtual";
+         $transaction_data->status = $status;
+         $transaction_data->ref_num_purchase = "";
+         $transaction_data->reference = $reference;
+         $transaction_data->date_of_purchase = $date;
+         $transaction_data->save();
+         
+         if($transaction_data){
+             Log::info('Arraytrue', ['updated_successfully', 'true']);
+         }else{
+                Log::info('Arraytrue', ['updated_unsuccessfully', 'false']);
+         }
+    }else{
+             Log::info('CheckLog', ['updated_successfully', 'false statemet']);
+    }
+    }catch(\Exception $e){
+        Log::info('Errorlog', ['Log data' => $e]);
+    }
+        
+        // Log::info('state', ['amount' => $amount, 'reference' => $reference, 'status' => $status, 'username' => $username, 'customer_ref' => $customer_ref_id ]);
+    }
+    
      else if($result->event == "dedicatedaccount.assign.success"){
          $first= $result->data->customer->first_name;
          $account_name = $result->data->dedicated_account->account_name;
@@ -162,7 +298,17 @@ class ServicePostController extends Controller
         return response()->json(['message' => 'Dedicated account received']);
      }
     //  for failed transactions
-    }
+     else if($result->event  == "transfer.failed"){
+       $updatedata = Transactions::where('reference', $treference)->first();
+       $username = $updatedata->username;
+         $update = UserAccountDetails::where('username', $username)->first();
+         $update->update(['user_amount', $tamount]);
+        }else{
+            return response()->json(['message' => 'Not failed']);
+        }
+     }
+        
+ 
 
     public function AssignDedicatedVirtual(Request $request){
          $url = "https://api.paystack.co/dedicated_account/assign";
@@ -216,7 +362,7 @@ class ServicePostController extends Controller
             [
               "account_number" => "required",
               "account_code" => 'required',
-            ],
+            ]
           );
           try {
           $accountnumber = $request['account_number'];
@@ -381,7 +527,6 @@ class ServicePostController extends Controller
                 echo $request;
             }
             // fetch current banks in Nigeria
-
             public function FetchAllBanks(Request $request){
                 $url = "https://api.paystack.co/bank";
                 $headers = [
@@ -395,8 +540,11 @@ class ServicePostController extends Controller
 
         public function VerifyCableMeter(Request $request)
         {
+            
             $request->validate(['meternumber' => "required", "metertype" => "required"]);
-            $url = "https://sandbox.vtpass.com/api/merchant-verify";
+            
+            $url = "https://vtpass.com/api/merchant-verify";
+            
             $headers = [
                 "api-key" => env('VTPASS_API_KEY'),
                 "secret-key" => env('VTPASS_SECRET_KEY'),
@@ -405,6 +553,8 @@ class ServicePostController extends Controller
                 "billersCode" => $request->input("meternumber"),
                 "serviceID" => $request->input('metertype'),
             ]);
+            
+        
             if ($response->successful()) {
                 $data = $response->json();
                 // $json_r = json_encode($data);
@@ -413,7 +563,7 @@ class ServicePostController extends Controller
                     $cardverify = $data['content'];
                     if(isset($cardverify['Customer_Name'])){
                         if($cardverify['Customer_Name']){
-                          return response()->json(['message'=> "valid", "status" => "success"]);
+                          return response()->json(['message'=> "valid", "status" => "success", 'UtilityIDName' => $cardverify['Customer_Name']]);
                         }else{
                             return response()->json(['message'=> "Invalid", "status" => "failed"]);
                         }
@@ -423,6 +573,8 @@ class ServicePostController extends Controller
                 }else{
                     return response()->json(['message'=> "Invalid", "status" => "failed"]);
                 }
+            }else{
+                return response()->json(['message' => $response->getStatusCode(), 'body' => $response->body()]);
             }
         }
         
@@ -448,7 +600,7 @@ public function fetchCableSubscription(Request $request){
        'reference' => 'required',
        ]);  
 
-       $url = "https://sandbox.vtpass.com/api/pay";
+       $url = "https://vtpass.com/api/pay";
        // Generate unique reference ID
        $currentyear = Carbon::now()->timezone('Africa/Lagos')->format('Ymdhi');
        $rand_ref = mt_rand(11111111, 99999999);
@@ -477,7 +629,7 @@ public function fetchCableSubscription(Request $request){
                'request_id' => $request['reference'],
                'serviceID' => $request['sub_type_purchase'],
                'amount' => $request['amount'],
-               'phone' => '08011111111',
+               'phone' => $request['ref_num_purchase'],
            ]);
         //    "20240705134730YUs83meikd"
 
@@ -525,6 +677,8 @@ public function fetchCableSubscription(Request $request){
             "plan" => "required",
         ]);
 
+
+    //  DB::beginTransaction();
 
        $password_pin_check = UserSignup::where('users_id', $request['userpin'])->first();
        if(!$password_pin_check){
@@ -588,10 +742,18 @@ public function fetchCableSubscription(Request $request){
                 return response()->json(['message' => $status, 'status' => 'success']);
             }
             
-        }else{  
-         return response()->json(['message' => 'not successful', 'status' => 'false']);
         }
+        
+        else{  
+            if($requestDataCall->getStatusCode() == "400"){
+                return response()->json(['message' => 'Package not available', 'status' => 'error']);
+            }
+            
+         return response()->json(['message' => 'not successful', 'status' => 'false', 'code' => $requestDataCall->body()]);
+        }
+        // DB::commit();
     }catch(\Exception $e){
+        // DB::rollBack();
         return response()->json(['message' => 'Oops something went wrong, try again later','status' =>'error', 'log' => $e->getMessage()]);
     }
         
@@ -624,7 +786,7 @@ public function fetchCableSubscription(Request $request){
             $check_amount->update(['user_amount' => $new_amount]);
         }
         
-        $url = "https://sandbox.vtpass.com/api/pay";
+        $url = "https://vtpass.com/api/pay";
         $headers = [
             'api-key' => env('VTPASS_API_KEY'),
             'secret-key' => env('VTPASS_SECRET_KEY'),
@@ -674,7 +836,7 @@ public function fetchCableSubscription(Request $request){
                     } 
                   if($responsestack['code'] == "000"){
                     // requery transaction to understand the cause of the status
-                    $url = "https://sandbox.vtpass.com/api/requery";
+                    $url = "https://vtpass.com/api/requery";
                     $headers =[
                         "api-key" => env('VTPASS_API_KEY'),
                         "secret-key" => env('VTPASS_SECRET_KEY'),
@@ -760,7 +922,7 @@ public function fetchCableSubscription(Request $request){
             "serviceid" => "required",
             "type" => "required",
         ]);
-        $url = "https://sandbox.vtpass.com/api/merchant-verify";
+        $url = "https://vtpass.com/api/merchant-verify";
         $headers = [
             'api-key' => env('VTPASS_API_KEY'),
             'secret-key' => env('VTPASS_SECRET_KEY'),
@@ -778,7 +940,7 @@ public function fetchCableSubscription(Request $request){
                 $verifycard = $jsonencode['content'];
                 if(isset($verifycard['Customer_Name'])){
                     if($verifycard['Customer_Name']){
-                return response()->json(['message' => "valid", "status" => "success"]);
+                return response()->json(['message' => "valid", "status" => "success",  'UtilityIDName' => $verifycard['Customer_Name']]);
                     }
                 else{
                     return response()->json(['message' => "invalid custom", "status" => "error"]);
@@ -790,7 +952,7 @@ public function fetchCableSubscription(Request $request){
         }
     }
     }catch(\Exception $e){
-        return response->json(['message' => $e->getMessage()]);
+        return response()->json(['message' => $e->getMessage()]);
     }
     }
 
@@ -830,7 +992,7 @@ public function fetchCableSubscription(Request $request){
             $check_amount->update(['user_amount' => $new_amount]);
         }
 
-             $url = "https://sandbox.vtpass.com/api/pay";
+             $url = "https://vtpass.com/api/pay";
              $headers = [
                 "api-key" => env('VTPASS_API_KEY'),
                 "secret-key" => env('VTPASS_SECRET_KEY'),
@@ -867,12 +1029,12 @@ public function fetchCableSubscription(Request $request){
                         $transaction_data->reference = $request->input('reference');
                         $transaction_data->date_of_purchase = $request->input('currentpurchase') ?? "";
                       $transaction_data->save();
-                    return response()->json(['message' => "Transaction failed, wallet amount reversed", "status" => "error"]);
+                    return response()->json(['message' => "Transaction failed, wallet amount reversed", "status" => "error", 'code' => $data->code]);
                 }
              
                 if($jsonstatus == 200 && $data->code == "000"){
                 //    requery transaction data 
-                   $url = "https://sandbox.vtpass.com/api/requery";
+                   $url = "https://vtpass.com/api/requery";
                    $headers = [
                     "api-key" => env('VTPASS_API_KEY'),
                     "secret-key" => env('VTPASS_SECRET_KEY'),
@@ -919,7 +1081,7 @@ public function fetchCableSubscription(Request $request){
                   return response()->json(['message'=> $data]);
                 }
             
-                return response()->json(['message' => $requestinfo]);
+        
              }else{
                 return response()->json(['message' => "Not successful"]);
              }

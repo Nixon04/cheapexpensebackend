@@ -395,7 +395,7 @@ public function ReferralLink(Request $request){
       $transaction = [];
      if($user_transaction){
        $transaction = $user_transaction;
-       Cache::put($airtimecachekey, $transaction, now()->addMinutes(30));
+   
       return response()->json(['message' => $transaction, 'status' => 'success']);
      }else{
       return response()->json(['messasge' => "Couldn't find user transaction", 'status' => 'failed']);
