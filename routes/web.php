@@ -12,6 +12,7 @@ use App\Http\Controllers\PostController;
 use Inertia\Inertia;
 
 Route::get('/', [ViewHomeController::class, 'homeview'])->name('homeview');
+Route::get('/privacy', [ViewHomeController::class, 'Privacy'])->name('Privacy');
 
 // defining the route for authcontroller bodies for get request
 Route::controller(AuthController::class)->group(function () {

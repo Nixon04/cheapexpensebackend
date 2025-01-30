@@ -60,7 +60,7 @@ h1 {
     background: var(--first-bg-state);
 }
 .hero-pad-general{
-    height: 60vh;
+    height: 100lvh;
 }
 .hero-pad-general{
     display: flex;

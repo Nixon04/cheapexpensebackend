@@ -15,4 +15,7 @@ public function homeview(){
 public function AuthHome(){
     return Inertia::render('auth.home');
 }
+public function Privacy(){
+    return Inertia::render('privacy');
+}
 }

@@ -128,9 +128,30 @@ height: auto!important;
 .bg-font-note{
     font-size: 4.4rem;
 }
-.bg-main-color{
-    background: var(--bg-primary-main)!important;
-}
+/*  */
 .bg-secondarycolor{
  color: var(--bg-secondary-meal);
 }
+.bg-header-privacy{
+    height:100px;
+    width: 100%;
+    padding:12px;
+    background: #fff;
+    margin: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 15px;
+    box-shadow: 0px 8px 32px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+.privacy-contents{
+    padding: 40px;
+}
+
+.privacy-contents h1, h6{
+    color: #fff!important;
+}
+
+

@@ -37,7 +37,7 @@
      <section class="bg-activities first-bg-state m-0">
       <div class="alert-msg-content text-center pad-up mb-5">
         <h4 class="fs-1 text-dark bg-font-big text-whit">Important Guide to establish a smooth connection with us </h4>
-          <h6 class="text-whit">Secure your chance to enjoy premium package with us
+          <h6 class="text-dark">Secure your chance to enjoy premium package with us
           </h6>
      </div>
      <div class="bg-activities-card-layout">
@@ -49,7 +49,7 @@
                 <i class="fa-regular fa-chess-queen p-2"></i> 
                </div>
                <h4 class="text- fw-bold">Create an account</h4>
-               <h6 class="text- space-x-3">Register on our mobile app, pass in your necessary details  as we tends to process your data to give you discounts on holidays and your birthdays</h6>
+               <h6 class="text-dark space-x-3">Register on our mobile app, pass in your necessary details  as we tends to process your data to give you discounts on holidays and your birthdays</h6>
             </div>
           </div>
 
@@ -59,7 +59,7 @@
                 <i class="fa-regular fa-chess-queen p-2"></i> 
                </div>
                <h4 class="fw-bold fs-4">Pay for Services</h4>
-               <h6>For every service bought we offer you a discount to enjoy from, never miss any day from our vouchers and incredible discounts on each purchase</h6>
+               <h6 class="text-dark">For every service bought we offer you a discount to enjoy from, never miss any day from our vouchers and incredible discounts on each purchase</h6>
             </div>
           </div>
 
@@ -69,7 +69,7 @@
                 <i class="fa-regular fa-chess-queen p-2"></i> 
                </div>
                <h4 class="fw-bold">Refer & Earn</h4>
-               <h6>For every user you bring to our platform we offer you the sum of NGN 150 cashback to your referral balance on your will to push back to your main account</h6>
+               <h6 class="text-dark">For every user you bring to our platform we offer you the sum of NGN 150 cashback to your referral balance on your will to push back to your main account</h6>
             </div>
           </div>
         </div>
