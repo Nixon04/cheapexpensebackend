@@ -3,7 +3,7 @@
     <div>
       <!-- header -->
       <Head>
-        <title>Mealxpress | Login Page For Admin</title>
+        <title>Mealxpress | Login Page For Admin Page</title>
       </Head>
       <div class="mealxpress-background-set">
           <div class="meal-header-state bg-pad-big">
