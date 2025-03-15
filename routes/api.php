@@ -5,6 +5,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\APIControllerBackend;
 use App\Http\Controllers\ServicePostController;
 
+
+
+
+
+// post request 
+
+
 Route::prefix('')->group(function(){
     Route::get('viewimage', [APIControllerBackend::class, 'FetchImage']);
     Route::post('signup', [APIControllerBackend::class, 'signupController']);

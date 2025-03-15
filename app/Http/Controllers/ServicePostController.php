@@ -298,15 +298,16 @@ class ServicePostController extends Controller
         return response()->json(['message' => 'Dedicated account received']);
      }
     //  for failed transactions
-     else if($result->event  == "transfer.failed"){
-       $updatedata = Transactions::where('reference', $treference)->first();
-       $username = $updatedata->username;
-         $update = UserAccountDetails::where('username', $username)->first();
-         $update->update(['user_amount', $tamount]);
-        }else{
-            return response()->json(['message' => 'Not failed']);
-        }
-     }
+    //  else if($result->event  == "transfer.failed"){
+    //    $updatedata = Transactions::where('reference', $treference)->first();
+    //    $username = $updatedata->username;
+    //      $update = UserAccountDetails::where('username', $username)->first();
+    //      $update->update(['user_amount', $tamount]);
+    //     }else{
+    //         return response()->json(['message' => 'Not failed']);
+    //     }
+    //  
+    }
         
  
 
