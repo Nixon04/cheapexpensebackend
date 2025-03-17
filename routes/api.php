@@ -56,6 +56,7 @@ Route::prefix('')->group(function(){
     Route::post('refbonusfund', [APIControllerBackend::class, 'RefBonusReturn']);
     Route::post('deleteaccount', [APIControllerBackend::class, 'DeleteAccount']);
 
+
     route::post('fetchdedicatedaccount', [APIControllerBackend::class, 'FetchDedicatedAccount']);
     route::post('sendnotification', [APIControllerBackend::class,'sendNotificationToAll']);
     Route::post('deactivate', [APIControllerBackend::class, 'DeleteAccount']);
@@ -72,12 +73,17 @@ Route::prefix('')->group(function(){
     Route::get('updatedversion', [APIControllerBackend::class, 'UpdatedVersion']);
     Route::get('getallservice', [APIControllerBackend::class, 'GetAllServices']);
 
+
+    Route::post('datavend', action: [ServicePostController::class,'NewDataVend']);
+
     Route::get('showtoken', [APIControllerBackend::class, 'ShowToken']);
 
     
     Route::post('webhook', [ServicePostController::class, 'Webhook']);
     Route::post('uzowebhook', [ServicePostController::class, 'UzoBest']);
     Route::post('vtpasswebhook', [ServicePostController::class, 'Vtpasswebhook']);
+    
+    Route::post('payscribehook',  [ServicePostController::class, 'PayscribeWebhook']);
 
     
 

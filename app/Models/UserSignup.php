@@ -20,6 +20,7 @@ class UserSignup extends Model
         'dob',
         'date',
         'users_id',
+        'fcmtoken',
         'referral_id'
     ];
 }

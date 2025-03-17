@@ -19,6 +19,41 @@ class ServicePostController extends Controller
 {
 
 
+    public function PayscribeWebhook(Request $request){
+    $payment = $request->getContent();
+    $headers = $request->headers->all();
+    file_put_contents(public_path('file12.html'), "<pre>". htmlspecialchars($payment). "<pre>");
+    $json = json_encode($payment);
+    
+    }
+
+    public function NewDataVend(Request $request){
+
+       try{
+        $url = "https://sandbox.payscribe.ng/api/v1/data/vend";
+        $headers = [
+            'Authorization' => "Bearer " .env('PAYSCRIBE_PUBLIC_KEY'),
+            'accept' => 'application/json',
+        ];
+
+       $response = Http::withHeaders($headers)->post($url, [
+        'plan' => 'PSLAN_177',
+        'recipient' => '08132931751',
+        'network' => 'mtn',
+        'ref' => '39343ca3-3771-4edd-b316-09a2d345768bsd', 
+       ]);
+
+       if($response->successful()){
+        $json = $response->getBody();
+        return response()->json(['message' => $json]);
+       }
+       return response()->json(['message' => 'Not successful']);
+    }catch(\Exception $e){
+        return response()->json(['message' => $e->getMessage()]);
+    }
+    }
+
+
     public function Vtpasswebhook(Request $request){
         $paymentfield = $request->getContent();
         $headers = $request->headers->all();
@@ -41,7 +76,7 @@ class ServicePostController extends Controller
                 if($vtstatus == "reversed"){
                    $updatedata->update(['status' => 'reversed']);
                     $update->update(['user_amount' => $vtamount]);
-                   Log::info('entry', 'success'); 
+                   Log::info('entry', ['status' =>  'success']); 
                    return response(['message' => 'Updated']);
                  }else{
                   return response(['message' => 'Not Updated']);
@@ -75,43 +110,6 @@ class ServicePostController extends Controller
         Log::info('Reference', ['reference' => $vtreference]);
      }
 
-
-
-    public function UzoBest(Request $request){
-        $paymentDetails = $request->getContent();
-        $headers = $request->headers->all();
-        $headers = json_encode($headers);
-
-        file_put_contents(public_path('file5.html'), "<pre>". htmlspecialchars($paymentDetails) . "<pre>");
-        file_put_contents(public_path('file6.html'), "<pre>". htmlspecialchars($headers) . "<pre>");
-
-       $json = json_decode($paymentDetails);
-
-    //    $uzoreference = $json->ident;
-    //    $status = $json->transaction_status;
-    //    Log::info('content', ['status' => $status,  'reference' => $uzoreference]);
-    //    $updatedata = Transactions::where('reference', $uzoreference)->first();
-    //    if($updatedata){
-    //    $uzoamount = $updatedata->amount;
-    //    $uzousername = $updatedata->username;
-    //     if($status == "successful"){
-    //         $updatedata->update(['status' => 'success']);
-    //         Log::info('entry', 'success'); 
-    //        return response(['message' => 'Updated']);
-    //     }
-    //     else
-    //      if($status == "failed"){
-    //     $update = UserAccountDetails::where('username', $uzousername)->first();
-    //     $update->update(['user_amount', $uzoamount]);
-    //     return response()->json(['message' => 'Wallet reversed', 'status' => 'success']);
-    //     }
-    //     else  if($status == "pending"){
-    //       return response()->json(['message' => 'Please be patient we are working on it Asap']);
-    //     } 
-    //    }else{
-    //        return response(['message' => 'Not Updated']);
-    //    }
-    }
 
   
     public function Webhook(Request $request){
@@ -482,7 +480,6 @@ class ServicePostController extends Controller
             "amount" => $request->input('amount'), 
             "reference" => $request->input('reference'),
             "recipient" => $request->input('recipient'),
-            "reason" => $request->input('reasons'),
         ]);
         try{
 

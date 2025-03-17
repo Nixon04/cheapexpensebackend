@@ -334,18 +334,25 @@ public function ReferralLink(Request $request){
         $request->validate([
             'username' => 'required',
             'password' => 'required',
+            'fcmtoken' =>  'required',
         ]);
+
+        try{
         $checkstatusdeletecall = DeactivateAccount::where('username', $request['username'])->first();
         if($checkstatusdeletecall){
           return response()->json(['message' => 'Incorrect details']);
         }
 
-        $validatecheck = UserSignup::where('username', $request['username'])->first();
+        $validatecheck = UserSignup::where('username', $request->input('username'))->orWhere('email', $request->input('username'))->first();
+         $validatecheck->update(['fcmtoken' => $request->input('fcmtoken')]);
             if($validatecheck && hash::check($request['password'], $validatecheck->password)){
-                return response()->json(['message' => 'information correct', 'status' =>'success']);
+                return response()->json(['message' => 'information correct', 'status' =>'success', 'username' => $request->input('username')]);
             }else{
                 return response()->json(['message' => 'sorry we couldn\'t validate your response', 'status' => 'failed']);
             }
+        }catch(\Exception $e){
+          return response()->json([$e->getMessage()]);
+        }
     }
 
     public function LoginViaPin(Request $request){
