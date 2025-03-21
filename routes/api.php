@@ -77,12 +77,12 @@ Route::prefix('')->group(function(){
     Route::post('datavend', action: [ServicePostController::class,'NewDataVend']);
 
     Route::get('showtoken', [APIControllerBackend::class, 'ShowToken']);
-
+    Route::get('fetchnewdata', [ServicePostController::class, 'NewDataFetch']);
     
     Route::post('webhook', [ServicePostController::class, 'Webhook']);
     Route::post('uzowebhook', [ServicePostController::class, 'UzoBest']);
     Route::post('vtpasswebhook', [ServicePostController::class, 'Vtpasswebhook']);
-    
+
     Route::post('payscribehook',  [ServicePostController::class, 'PayscribeWebhook']);
 
     

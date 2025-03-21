@@ -15,14 +15,16 @@ return new class extends Migration
             $table->id();
             $table->string('plan_id');
             $table->string('title');
+            $table->string('network_type');
             $table->string('alias');
+            $table->string('amount');
             $table->string('reference');
             $table->string('status');
             $table->timestamps();
         });
     }
 
-    /**
+    /**a
      * Reverse the migrations.
      */
     public function down(): void

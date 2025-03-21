@@ -19,41 +19,6 @@ class ServicePostController extends Controller
 {
 
 
-    public function PayscribeWebhook(Request $request){
-    $payment = $request->getContent();
-    $headers = $request->headers->all();
-    file_put_contents(public_path('file12.html'), "<pre>". htmlspecialchars($payment). "<pre>");
-    $json = json_encode($payment);
-    
-    }
-
-    public function NewDataVend(Request $request){
-
-       try{
-        $url = "https://sandbox.payscribe.ng/api/v1/data/vend";
-        $headers = [
-            'Authorization' => "Bearer " .env('PAYSCRIBE_PUBLIC_KEY'),
-            'accept' => 'application/json',
-        ];
-
-       $response = Http::withHeaders($headers)->post($url, [
-        'plan' => 'PSLAN_177',
-        'recipient' => '08132931751',
-        'network' => 'mtn',
-        'ref' => '39343ca3-3771-4edd-b316-09a2d345768bsd', 
-       ]);
-
-       if($response->successful()){
-        $json = $response->getBody();
-        return response()->json(['message' => $json]);
-       }
-       return response()->json(['message' => 'Not successful']);
-    }catch(\Exception $e){
-        return response()->json(['message' => $e->getMessage()]);
-    }
-    }
-
-
     public function Vtpasswebhook(Request $request){
         $paymentfield = $request->getContent();
         $headers = $request->headers->all();
@@ -76,7 +41,7 @@ class ServicePostController extends Controller
                 if($vtstatus == "reversed"){
                    $updatedata->update(['status' => 'reversed']);
                     $update->update(['user_amount' => $vtamount]);
-                   Log::info('entry', ['status' =>  'success']); 
+                   Log::info('entry', 'success'); 
                    return response(['message' => 'Updated']);
                  }else{
                   return response(['message' => 'Not Updated']);
@@ -110,6 +75,43 @@ class ServicePostController extends Controller
         Log::info('Reference', ['reference' => $vtreference]);
      }
 
+
+
+    public function UzoBest(Request $request){
+        $paymentDetails = $request->getContent();
+        $headers = $request->headers->all();
+        $headers = json_encode($headers);
+
+        file_put_contents(public_path('file5.html'), "<pre>". htmlspecialchars($paymentDetails) . "<pre>");
+        file_put_contents(public_path('file6.html'), "<pre>". htmlspecialchars($headers) . "<pre>");
+
+       $json = json_decode($paymentDetails);
+
+    //    $uzoreference = $json->ident;
+    //    $status = $json->transaction_status;
+    //    Log::info('content', ['status' => $status,  'reference' => $uzoreference]);
+    //    $updatedata = Transactions::where('reference', $uzoreference)->first();
+    //    if($updatedata){
+    //    $uzoamount = $updatedata->amount;
+    //    $uzousername = $updatedata->username;
+    //     if($status == "successful"){
+    //         $updatedata->update(['status' => 'success']);
+    //         Log::info('entry', 'success'); 
+    //        return response(['message' => 'Updated']);
+    //     }
+    //     else
+    //      if($status == "failed"){
+    //     $update = UserAccountDetails::where('username', $uzousername)->first();
+    //     $update->update(['user_amount', $uzoamount]);
+    //     return response()->json(['message' => 'Wallet reversed', 'status' => 'success']);
+    //     }
+    //     else  if($status == "pending"){
+    //       return response()->json(['message' => 'Please be patient we are working on it Asap']);
+    //     } 
+    //    }else{
+    //        return response(['message' => 'Not Updated']);
+    //    }
+    }
 
   
     public function Webhook(Request $request){
@@ -295,16 +297,6 @@ class ServicePostController extends Controller
          Log::info('information', ['name' => $first]);
         return response()->json(['message' => 'Dedicated account received']);
      }
-    //  for failed transactions
-    //  else if($result->event  == "transfer.failed"){
-    //    $updatedata = Transactions::where('reference', $treference)->first();
-    //    $username = $updatedata->username;
-    //      $update = UserAccountDetails::where('username', $username)->first();
-    //      $update->update(['user_amount', $tamount]);
-    //     }else{
-    //         return response()->json(['message' => 'Not failed']);
-    //     }
-    //  
     }
         
  
@@ -461,6 +453,7 @@ class ServicePostController extends Controller
         if(!$password_pin_check){
            return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
         }
+        
         $check_amount = UserAccountDetails::where('username', $request['username'])->first();
         if($check_amount->user_amount < $request['amount']  || 0 == $request['amount'] || $request['amount'] > $check_amount->user_amount ){
          return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
@@ -480,6 +473,7 @@ class ServicePostController extends Controller
             "amount" => $request->input('amount'), 
             "reference" => $request->input('reference'),
             "recipient" => $request->input('recipient'),
+            "reason" => $request->input('reasons'),
         ]);
         try{
 
@@ -509,8 +503,6 @@ class ServicePostController extends Controller
             return response()->json(['message' => $e->getMessage()]);
         }
 }
-
-
 
 // 
             public function ViewPackage(Request $request){
@@ -584,108 +576,118 @@ public function fetchCableSubscription(Request $request){
         return response()->json(['message' => $fetch]);
     }
    }
-    public function AirtimePurchase(Request $request)
-    {
-      $request->validate([
-       "username" => 'required',
-       "amount" => 'required|numeric',
-       "type_of_purchase" => 'required',
-       "sub_type_purchase" => 'required',   
-       "ref_num_purchase" => 'required',
-       "userpin" => 'required',
-       "date_of_purchase" => 'required',
-       "data_type" => 'required',
-       'reference' => 'required',
-       ]);  
+   
+   public function AirtimePurchase(Request $request)
+{
+    $request->validate([
+        "username" => 'required|string',
+        "amount" => 'required|integer|min:10', // Minimum amount set to 20
+        "type_of_purchase" => 'required',
+        "sub_type_purchase" => 'required',   
+        "ref_num_purchase" => 'required',
+        "userpin" => 'required',
+        "date_of_purchase" => 'required',
+        "data_type" => 'required',
+        "reference" => 'required|unique:transactions,reference',
+    ]);  
 
-       $url = "https://vtpass.com/api/pay";
-       // Generate unique reference ID
-       $currentyear = Carbon::now()->timezone('Africa/Lagos')->format('Ymdhi');
-       $rand_ref = mt_rand(11111111, 99999999);
-       $reference_joint = $currentyear . $rand_ref;
 
-       $password_pin_check = UserSignup::where('users_id', $request['userpin'])->first();
-       if(!$password_pin_check){
-          return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
-       }
-       $check_amount = UserAccountDetails::where('username', $request['username'])->first();
-       if($check_amount->user_amount < $request['amount']  || 0 == $request['amount']  ){
-        return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
-       } else{
-          $new_amount = $check_amount->user_amount - $request['amount'];
-          $check_amount->update(['user_amount' => $new_amount]);
-       }
-  
-       $headers = [
-           'api-key' => env('VTPASS_API_KEY'),
-           'secret-key' => env('VTPASS_SECRET_KEY'),
-           'accept' => 'application/json',
-       ];
-       // Make Guzzle post request
-       try {
-           $response = Http::withHeaders($headers)->post($url, [
-               'request_id' => $request['reference'],
-               'serviceID' => $request['sub_type_purchase'],
-               'amount' => $request['amount'],
-               'phone' => $request['ref_num_purchase'],
-           ]);
-        //    "20240705134730YUs83meikd"
+        // Fetch user balance with row-level locking
+        $check_amount = UserAccountDetails::where('username', $request->input('username'))->first();
 
-           if ($response->successful() && $response)  {
-            //   since data is successful, we will create a dummy attachment
-             $transaction_data = new Transactions();
-             $transaction_data->username = $request['username'];
-             $transaction_data->amount = $request['amount'];
-             $transaction_data->type_of_purchase = $request['type_of_purchase'];
-             $transaction_data->sub_type_purchase = $request['sub_type_purchase'];
-             $transaction_data->data_type = $request['data_type'];
-             $transaction_data->status = $request['status'];
-             
-             $transaction_data->ref_num_purchase = $request['ref_num_purchase'];
-             $transaction_data->reference = $request['reference'];
-             $transaction_data->date_of_purchase = $request->input('date_of_purchase');
-             $transaction_data->save();
-              if($transaction_data){
-               return response()->json(['message' => 'success','status' => 'success']);
-              }
-            else {
-            //    \Log::error('Airtime Purchase Failed=> ', ['response' => $response->body()]);
-               return response()->json(['message' => 'Not successful', 'status' => 'error']
-               );
-           }
+        if (!$check_amount || $check_amount->user_amount < $request->input('amount')) {
+            return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
+        }else{
+                    $check_amount->update([
+                    'user_amount' => $check_amount->user_amount - $request->input('amount'),
+                ]);
         }
-       } catch (\Exception $e) {
-           \Log::error('Error=> ' . $e->getMessage());
-           return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
-       }
-    }
 
+        // Generate unique reference ID
+        $currentyear = Carbon::now()->timezone('Africa/Lagos')->format('Ymdhi');
+        $rand_ref = mt_rand(11111111, 99999999);
+        $generated_reference = $currentyear . $rand_ref;
+
+        // Validate user PIN
+        $password_pin_check = UserSignup::where('users_id', $request->input('userpin'))->first();
+        if (!$password_pin_check) {
+            return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
+        }
+
+        $url = "https://vtpass.com/api/pay";
+        $headers = [
+            'api-key' => env('VTPASS_API_KEY'),
+            'secret-key' => env('VTPASS_SECRET_KEY'),
+            'accept' => 'application/json',
+        ];
+
+        // Make API request to VTPass
+        try {
+            $response = Http::withHeaders($headers)->post($url, [
+                'request_id' => $generated_reference, // Use generated reference
+                'serviceID' => $request->input('sub_type_purchase'),
+                'amount' => $request->input('amount'),
+                'phone' => $request->input('ref_num_purchase'),
+            ]);
+
+            if ($response->successful()) {
+              
+                $transaction_data = new Transactions();
+                 $transaction_data->username = $request['username'];
+                 $transaction_data->amount = $request['amount'];
+                 $transaction_data->type_of_purchase = $request['type_of_purchase'];
+                 $transaction_data->sub_type_purchase = $request['sub_type_purchase'];
+                 $transaction_data->data_type = $request['data_type'];
+                 $transaction_data->status = $request['status'];
+                 
+                 $transaction_data->ref_num_purchase = $request['ref_num_purchase'];
+                 $transaction_data->reference = $request['reference'];
+                 $transaction_data->date_of_purchase = $request->input('date_of_purchase');
+                 $transaction_data->save();
+
+                return response()->json(['message' => 'success', 'status' => 'success']);
+            } else {
+                return response()->json(['message' => 'Airtime Purchase Failed', 'status' => 'error']);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error purchasing airtime: ' . $e->getMessage());
+            return response()->json(['message' => 'An error occurred', 'status' => 'error']);
+        }
+    
+}
+    
+    
+ 
     public function DataPurchase(Request $request){
         $request->validate([
             "username" => "required",
-            "amount" => 'required',
+            "amount" => 'required|integer|min:1',
             "type_of_purchase" => "required",
             "data_type" => 'required',
             "status" => 'required',
             "userpin" => 'required',
             "ref_num_purchase" => 'required',
             "date_of_purchase" => 'required',
-            "reference" => 'required',
+            "reference" => 'required|unique:transactions,reference',
             "network" => "required",
             "plan" => "required",
         ]);
 
 
-    //  DB::beginTransaction();
+
+     DB::beginTransaction();
 
        $password_pin_check = UserSignup::where('users_id', $request['userpin'])->first();
        if(!$password_pin_check){
           return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
        }
        $check_amount = UserAccountDetails::where('username', $request['username'])->first();
-       if($check_amount->user_amount < $request['amount']  || 0 == $request['amount'] ){
-        return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
-       } else{
+       
+          if ($request['amount'] <= 0 || $check_amount->user_amount < $request['amount']) {
+        return response()->json(['message' => 'Invalid or Insufficient Balance', 'status' => 'error']);
+        }
+        
+         else{
           $new_amount = $check_amount->user_amount - $request['amount'];
           $check_amount->update(['user_amount' => $new_amount]);
        }
@@ -704,6 +706,8 @@ public function fetchCableSubscription(Request $request){
             "plan" => $request->input('plan'),
             "Ported_number" =>  "true",
         ]);
+        Log::info('reference', ['plan' => $request->input('plan'), 'network' => $request->input('network')]);
+         DB::commit();
         try{
 
             $dusername = $request->input('username');
@@ -744,7 +748,15 @@ public function fetchCableSubscription(Request $request){
         
         else{  
             if($requestDataCall->getStatusCode() == "400"){
-                return response()->json(['message' => 'Package not available', 'status' => 'error']);
+                    $return_amount = UserAccountDetails::where('username', $request['username'])->first();
+                  if($return_amount){
+                      $initial_amount = $return_amount->user_amount;
+                      $totalremainingsum = $initial_amount + $request->input('amount');
+                      $return_amount->update(['user_amount' =>$totalremainingsum]);
+                  }
+                return response()->json(['message' => 'Current Package not available', 'status' => 'error']);
+                
+              
             }
             
          return response()->json(['message' => 'not successful', 'status' => 'false', 'code' => $requestDataCall->body()]);
@@ -764,7 +776,7 @@ public function fetchCableSubscription(Request $request){
             "serviceId" => "required",
             "billersCode" => "required",
             "variationCode" => "required",
-            "amount" => "required",
+             "amount" => 'required|integer|min:1',
             "transactionpin" => "required",
             "subscriptionType" => "required",
             "currentdatepurchase" => "required",
@@ -777,12 +789,15 @@ public function fetchCableSubscription(Request $request){
             return response()->json(['message' => "Invalid Pin", "status" => "error"]);
         }
         $check_amount = UserAccountDetails::where('username', $request['username'])->first();
-        if($check_amount->user_amount < $request['amount']  || 0 == $request['amount'] ){
-            return response()->json(['message'=> "Insufficient Balance", "status" => "error"]);
-        }else{
-            $new_amount = $check_amount->user_amount - $request['amount'];
-            $check_amount->update(['user_amount' => $new_amount]);
+       
+         if ($check_amount->user_amount <=0 ||  $request->input('amount') > $check_amount->user_amount ) {
+        return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
         }
+        else{
+          $new_amount = $check_amount->user_amount - $request['amount'];
+          $check_amount->update(['user_amount' => $new_amount]);
+       }
+       
         
         $url = "https://vtpass.com/api/pay";
         $headers = [
@@ -963,7 +978,7 @@ public function fetchCableSubscription(Request $request){
     public function AllPublicPurchase(Request $request){
         $request->validate([
             "username" => "required",
-            "amount"=> "required",
+             "amount" => 'required|integer|min:1',
             "networkType"=> "required",
             "billType"=> "required",
             "iuc"=> "required",
@@ -971,7 +986,7 @@ public function fetchCableSubscription(Request $request){
             "date"=> "required",
             "pin" => "required",
             "currentpurchase"=> "required",
-            "reference"=> "required",
+            "reference"=> "required|unique:transactions,reference",
         ]);
 
         try{
@@ -983,12 +998,15 @@ public function fetchCableSubscription(Request $request){
             return response()->json(['message' => "Invalid Pin", "status" => "error"]);
         }
         $check_amount = UserAccountDetails::where('username', $request['username'])->first();
-        if($check_amount->user_amount < $request['amount']  || 0 == $request['amount'] ){
-            return response()->json(['message'=> "Insufficient Balance", "status" => "error"]);
-        }else{
-            $new_amount = $check_amount->user_amount - $request['amount'];
-            $check_amount->update(['user_amount' => $new_amount]);
+        
+         if ($check_amount->user_amount <=0 ||  $request->input('amount') > $check_amount->user_amount ) {
+        return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
         }
+        else{
+          $new_amount = $check_amount->user_amount - $request['amount'];
+          $check_amount->update(['user_amount' => $new_amount]);
+       }
+       
 
              $url = "https://vtpass.com/api/pay";
              $headers = [
@@ -1079,9 +1097,9 @@ public function fetchCableSubscription(Request $request){
                   return response()->json(['message'=> $data]);
                 }
             
-        
+                return response()->json(['message' => $requestinfo]);
              }else{
-                return response()->json(['message' => "Not successful"]);
+                return response()->json(['message' => "Not successful", "state" => $response->getStatusCode()]);
              }
             }catch(\Exception $e){
                 return response()->json(['message' => "Server timeout, please try again", "status" => "error"]);
@@ -1094,12 +1112,12 @@ public function fetchCableSubscription(Request $request){
      public function AirtimeToCash(Request $request){
         $request->validate([
             "username" => 'required',
-            "amount" => 'required|numeric',
+              "amount" => 'required|integer|min:1',
             "networktype" => 'required',
             "bill_type" => 'required',
             "package_number" => 'required',
             "status" => 'required',
-            "reference" => 'required',
+            "reference" => 'required|unique:transactions,reference',
             "pin" => 'required',
             "date" => 'required',
         ]);

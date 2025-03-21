@@ -759,6 +759,26 @@ namespace App\Models {
     /**
      * App\Models\AllDataPackage
      *
+     * @property string $network_type
+     * @property string $amount
+     * @property \Illuminate\Support\Carbon|null $updated_at
+     * @property \Illuminate\Support\Carbon|null $created_at
+     * @property string $status
+     * @property string $reference
+     * @property string $alias
+     * @property string $title
+     * @property string $plan_id
+     * @property int $id
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage whereId($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage wherePlanId($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage whereTitle($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage whereAlias($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage whereReference($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage whereStatus($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage whereCreatedAt($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage whereUpdatedAt($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage whereAmount($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage whereNetworkType($value)
      * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage newModelQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage newQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<AllDataPackage>|AllDataPackage query()
