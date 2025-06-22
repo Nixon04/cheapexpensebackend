@@ -17,8 +17,27 @@ Route::get('/', [ViewHomeController::class, 'homeview'])->name('homeview');
 Route::get('/privacy', [ViewHomeController::class, 'Privacy'])->name('Privacy');
 
 
+
+Route::get( '/mealxpress_drinks/{filename}', action: function($filename){
+    $path = storage_path('app/private/mealxpress_drinks/' .$filename);
+    if(!file_exists($path)){
+      abort(404, 'Image Not Found');
+    }
+    return response()->file($path);
+  })->name('mealxpress_drinks');
+
+
+  Route::get('/userimages/{filename}', action: function($filename){
+  $path = storage_path('app/private/userimages/'. $filename);
+  if(!file_exists($path)){
+    abort(404, 'Image Not Found');
+  }
+  return response()->file($path);
+  })->name('userimages');
+
+
 Route::get('/test', function(){
-    $title = "TGIF";
+   $title = "TGIF"; 
     $body = "I have a dream that one day all things will be alright";
     $token = 'csavHiPnToK3971OUno1K_:APA91bFZ7_DHpb4lFfJf48gaJ4LOYJbAs7y80uYAgEX7b68OurF0F3R9Uu2y8TgACOwFkMVXdP231epiGZGr1dXB3iA0bRW1hwakevQxlQERqqvS8i6uiYM';
     $body ="We are here to gain momentum";
@@ -57,6 +76,8 @@ Route::controller(PostController::class)->group(function () {
     Route::post('/cheapx/auth/utility', 'UpdateUtility');
     Route::post('/cheapx/auth/cable', 'UpdateCable');
     Route::post('/cheapx/auth/sendnotification', 'sendNotification');
+    Route::post('/updatedatapackages', 'UpdateDataPackages');
+    Route::post('/sendnotification','SendNotification');
 });
 
 

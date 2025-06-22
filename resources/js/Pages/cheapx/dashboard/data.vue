@@ -7,11 +7,23 @@
         <NavbarComponent />
         <div class="mealxpress-content">
           <HeaderDashboard/>
-          <div class="mealxpress-main">
+          <div class="mealxpress-mai p-1">
             <div class="card-general-container card p-2">
                 <div class="card">
-                    <h5 class="card-header"></h5>
-                    <div class="d-flex justify-content-between px-6 me-3 ms-3">
+                    <h5 class="card-header">
+                      <div class="d-flex justify-content-end">
+                        <button  :class="[refstateloading ? 'inactive-state-button': 'btn-action' ]" @click="ReactiveUpdate()" :disabled="refstateloading" >
+                         
+                         <template v-if="refstateloading">...</template>
+                          <template v-else>
+                            <span  class="updatepg-text" >Update Package</span>
+                          </template>
+                          
+                        </button>
+                      </div>
+                    </h5>
+                    <div class="d-flex justify-content-between px-1">
+
                         <div class="d-flex">
                             <div class="form-input">
                                 <input type="text" class="form-control py-2" v-model="searchQuery"  placeholder="Search...">
@@ -23,22 +35,20 @@
                                     <option v-for="option in dropOption" :key="option" :value="option">{{ option }}</option>
                                 </select>
                             </div>
-                            <!-- <div class="meal-form-button">
-                                <button @click="ShowCenterModel(item)" class="togglebutton btn bg-button-submit py-3 text-sm">Add Users</button>
-                            </div> -->
+                        
                         </div>
                     </div>
-                    <div class="card-body">
+                    <div class="card-bod">
                     <div class="table-responsive text-nowrap">
                       <table class="table">
                        <thead>
                           <tr>
                           <th>Network Name</th>
                           <th>Network Code</th>
-                          <th>Network Price</th>
-                          <th>NetworkPlanList</th>
                           <th>Network Package</th>
-                          <th>Action</th>
+                          <th>NetworkPlanList</th>
+                          <th>Initial price</th>
+                          <th>Current price</th>
                           </tr>
                       </thead>
                       <tbody>`
@@ -47,16 +57,17 @@
                             No Data Plan Found
                           </td>
                         </tr>
-                          <tr v-for="(item, index) in paginatedData" :key="item.id">
+                          <tr v-for="(item, index) in paginatedData" :key="index.id">
                             <td v-if="noResults">No Registered User found  </td>
-                            <td> {{item.networkName}}</td>
-                            <td> {{item.networkCode}}</td>
-                            <td> {{item.networkPrice}}</td>
-                            <td> {{item.networkPlansList}}</td>
-                            <td>{{item.networkPackageSpace}}</td>
-                            <td @click="updateprice(item)"><i class="fa-solid fa-ellipsis cursor-pointer"></i></td>                            <td>
+                            <td> {{item.network}}</td>
+                            <td> {{item.plan_code}}</td>
+                            <td> {{item.name}}</td>
+                            <td> {{item.alias}}</td>
+                            <td>{{item.amount}}</td>
+                            <td>{{item.current_amount}}</td>
+                            <!-- <td @click="updateprice(item.id)"><i class="fa-solid fa-ellipsis cursor-pointer"></i></td>                            <td>
                       
-                    </td>
+                    </td> -->
                     </tr>
        
         </tbody>
@@ -87,7 +98,7 @@
     </div>
   </template>
   
-  <script lang="js">
+  <script>
   import '../../../assetsmain/vendor/css/rtl/core.css';
   import '../../../assetsmain/vendor/css/rtl/theme-default.css';
   import '../../../assetsmain/vendor/fonts/boxicons.css';
@@ -138,6 +149,40 @@
     const isLoading = ref(false);
     const addVisible = ref(false);
     const actionModal = ref('');
+    const toast = useToast();
+    const refstateloading = ref(false);
+
+     const ReactiveUpdate = async () => {
+      try{
+        refstateloading.value = true;
+        console.log('Loading',refstateloading.value);
+      const payload = {
+        'type': 'all',
+      };
+      const response = await axios.post('/updatedatapackages', payload, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if(response.status == 200){
+        toast.success('All Data Updated Successfully',{
+          hideProgressBar:true,
+          timeout: 3000,
+        });
+        console.log('successful');
+      }else{
+        console.log('Couldn\'t get the information needed');
+      }s
+    }catch(error){
+      console.log('Error '.error);
+    }
+    finally{
+      refstateloading.value = false;
+    }
+  }
+
 
     const dataModal = reactive({
         networkid: '',
@@ -217,6 +262,8 @@
       CloseCenterModel,
       dataModal,
       actionModal,
+      ReactiveUpdate,
+      refstateloading,
     }
     }
   }

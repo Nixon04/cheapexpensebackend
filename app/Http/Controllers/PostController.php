@@ -8,17 +8,186 @@ use Illuminate\Support\Facades\Session;
 use App\Models\Admin;
 use App\Models\PurchaseDataItems;
 use App\Models\CablePackages;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use App\Models\DataPackList;
+
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 
 
 class PostController extends Controller
 {
-    //
 
-    // Route::post('/cheapx/auth/loginpost', 'LoginPost');
-    // Route::post('/cheapx/auth/updatedata', 'UpdateData');
-    // Route::post('/cheapx/auth/utility', 'UpdateUtility');
-    // Route::post('/cheapx/auth/cable', 'UpdateCable');
-    // Route::post('/cheapx/auth/sendnotification', 'sendNotification');
+
+
+    public function SendNotification(Request $request){
+        $request->validate([
+            'title' => 'required',
+            'body' => 'required',
+        ]);
+        $body = $request->input('body');
+        // $token = $querydata->fcm_token;
+        // Initialize the Firebase Messaging service
+        $messaging = app('firebase.messaging');
+        // Create the notification message
+        $message = CloudMessage::withTarget('token', "d1mBwzByT1K8OZ4FWoCufL:APA91bHg5305IpC6GQdsHfFAucnwZweIGsp31rCjstinbRY5dABkp1bzYeHF-ph_NSELY0q9rpW8du9JR4BvMiSXJgUhxkXJ9UwxJBAImSrFzO4g-NY1Y5Q")
+            ->withNotification(notification: Notification::create($request->title ?? 'Title body', $body ?? 'Message body'));
+        // Send the message
+        try {
+            $response = $messaging->send($message);
+            return response()->json(['message' => "success", 'status' => 'success', 'response' => $response]);
+        } catch (\Exception $e) {
+            return response()->json([ 'message' => 'Error',  'status' => "false", 'error' => $e->getMessage()], 500);
+         }
+    }
+    
+    private function detectDurationType($planName)
+{
+    $planName = strtolower($planName);
+
+    $map = [
+        'daily' => ['daily', '1 day', '24 hours','2Day'],
+        'weekly' => ['weekly', '7 days', '1 week'],
+        'monthly' => ['30days', 'a month', 'month', '30Days', '30', '(7Days)'],
+        '2Month' => ['60Days', '60'],
+        '3Month' => ['90Days', '90'],
+        'yearly' => ['365 days', 'a year', 'year'],
+        'cheapy' => ['3 days', '10 days', 'flexi'] // fallback or other edge cases
+    ];
+
+    foreach ($map as $type => $keywords) {
+        foreach ($keywords as $keyword) {
+            if (str_contains($planName, $keyword)) {
+                return $type;
+            }
+        }
+    }
+
+    return 'cheapy';
+}
+
+
+private function applyMarkup($amount){
+    if ($amount <= 100) {
+        return ceil($amount * 1.0001); // 0.01%
+    } elseif ($amount <= 3000) {
+        return ceil($amount * 1.012); // 1.2%
+    } else {
+        return ceil($amount * 1.025); // 2.5%
+    }
+}
+
+
+    public function UpdateDataPackages(Request $request)
+    {
+        $request->validate([
+            'type' => 'required', 
+        ]);
+    
+        try {
+            $networks = ['mtn', 'airtel', 'glo', '9mobile']; 
+            $all_plans = [];
+    
+            foreach ($networks as $network) {
+                $url = "https://sandbox.payscribe.ng/api/v1/data/lookup?network={$network}";
+                $headers = [
+                    'Authorization' => 'Bearer ' . env('PAYSCRIBE_PUBLIC_KEY'),
+                    'Content-Type' => 'application/json',
+                ];
+    
+                $requestProcess = Http::withHeaders($headers)->get($url);
+    
+                if ($requestProcess->successful()) {
+                    $json_data = json_decode($requestProcess->body());
+    
+                    if ($json_data && isset($json_data->message->details)) {
+                        $plans_init = $json_data->message->details;
+    
+                        foreach ($plans_init as $entry) {
+                            $networkid = $entry->network_name;
+                            Log::info('Network Id', ['info' => $networkid]);
+    
+                            $existingPlans = DataPackList::where('network', $networkid)->get()->keyBy('plan_code');
+                            $apiPlanCodes = [];
+                            $bulkInsert = [];   
+    
+                            foreach ($entry->plans as $plan) {
+                                $originalAmount = floatval($plan->amount);
+                                $adjustedAmount = $this->applyMarkup($originalAmount);
+
+                                $durationType = $this->detectDurationType( $plan->name);
+                                $apiPlanCodes[] = $plan->plan_code;
+    
+                                if ($existingPlans->has($plan->plan_code)) {
+                                    $existingPlan = $existingPlans[$plan->plan_code];
+                                    if (
+                                        $existingPlan->name !== $plan->name ||
+                                        $existingPlan->alias !== $plan->alias ||
+                                        $existingPlan->amount != $plan->amount ||
+                                        $existingPlan->network != $networkid
+                                        || $existingPlan->duration_type !== $durationType
+                                        || $existingPlan->current_amount !== $adjustedAmount
+                                    ) {
+                                        $existingPlan->update([
+                                            'name' => $plan->name,
+                                            'alias' => $plan->alias,
+                                            'amount' => $plan->amount,
+                                            'network' => $networkid,
+                                            'current_amount' => $adjustedAmount,
+                                            'duration_type' => $durationType ??  'Duration',
+                                        ]);
+                                    }
+                                } else {
+                                    $bulkInsert[] = [
+                                        'network' => $networkid,
+                                        'plan_code' => $plan->plan_code,
+                                        'name' => $plan->name,
+                                        'alias' => $plan->alias,
+                                        'amount' => $plan->amount,
+                                        'current_amount' => $adjustedAmount,
+                                        'duration_type' => $durationType ?? 'Duration',
+                                        'created_at' => now(),
+                                        'updated_at' => now()
+                                    ];
+                                }
+    
+                                // Optional: add to output array
+                                $all_plans[] = [
+                                    'network' => $networkid,
+                                    'plan_code' => $plan->plan_code,
+                                    'name' => $plan->name,
+                                    'alias' => $plan->alias,
+                                    'amount' => $plan->amount,
+                                    'current_amount' => $adjustedAmount,
+                                    'durationType' => $durationType ??  'Duration',
+                                ];
+                            }
+    
+                            if (!empty($bulkInsert)) {
+                                DataPackList::insert($bulkInsert);
+                            }
+    
+                            DataPackList::where('network', $networkid)
+                                ->whereNotIn('plan_code', $apiPlanCodes)
+                                ->delete();
+                        }
+                    } else {
+                        Log::warning("No valid details returned for network: {$network}");
+                    }
+                } else {
+                    Log::error("Failed to fetch plans for network: {$network}");
+                }
+            }
+    
+            return response()->json(['details' => $all_plans, 'status' => 'success']);
+    
+        } catch (\Exception $e) {
+            Log::error('UpdateDataPackages Exception', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'An error occurred', 'status' => 'error'], 500);
+        }
+    }
+    
 
 
 
@@ -74,9 +243,6 @@ class PostController extends Controller
     } 
 
 
-     public function sendNotification(Request $request){
-        
-    } 
 
     public function LoginPost(Request $request){
         $request->validate([

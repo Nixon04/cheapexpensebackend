@@ -128,6 +128,11 @@ class APIControllerBackend extends Controller
       if($confirmuser){
         return response()->json(['message' => 'Username already registered']);
       }
+
+      $querycontact = userSignup::where('contact', $request->input('contact'))->first();
+      if($querycontact){
+        return response()->json(['message'=> 'Contact already registered']);
+      }      
       
       $confirmemail = userSignup::where('email', $request->email)->first();
       if($confirmemail){
@@ -145,6 +150,7 @@ class APIControllerBackend extends Controller
        $insertdata->profileimage = "0";
        $insertdata->dob = $request->input('dob');
        $insertdata->resetcode = "";
+       $insertdata->fcmtoken = "";
        $insertdata->date = now();
        $insertdata->referral_id =  $ref;
        $insertdata->users_id = $request->input('userpin');
@@ -337,16 +343,19 @@ public function ReferralLink(Request $request){
             'fcmtoken' =>  'required',
         ]);
 
+        // dd($request->input('fcmtoken'));
+
         try{
+
         $checkstatusdeletecall = DeactivateAccount::where('username', $request['username'])->first();
         if($checkstatusdeletecall){
           return response()->json(['message' => 'Incorrect details']);
         }
 
         $validatecheck = UserSignup::where('username', $request->input('username'))->orWhere('email', $request->input('username'))->first();
-         $validatecheck->update(['fcmtoken' => $request->input('fcmtoken')]);
             if($validatecheck && hash::check($request['password'], $validatecheck->password)){
-                return response()->json(['message' => 'information correct', 'status' =>'success', 'username' => $request->input('username')]);
+              $validatecheck->update(['fcmtoken' => $request->input('fcmtoken') || '']);
+                return response()->json(['message' => 'information correct', 'status' =>'success', 'username' => $validatecheck->username]);
             }else{
                 return response()->json(['message' => 'sorry we couldn\'t validate your response', 'status' => 'failed']);
             }
@@ -389,20 +398,11 @@ public function ReferralLink(Request $request){
     public function Transactions(Request $request){
      
       $request->validate(['username' => 'required']);
-      $username = $request['username'];
-       $airtimecachekey = "user_transaction_{$username}";
-      //  if(cache::has($airtimecachekey)){
-      //   return response()->json([
-      //     'message' => Cache::get($airtimecachekey),
-      //     'status' => 'success'
-      //   ],);
-      //  }
-    
+      $username = $request['username'];    
       $user_transaction = Transactions::where('username', $request['username'])->orderBy('id','DESC')->get();   
       $transaction = [];
      if($user_transaction){
        $transaction = $user_transaction;
-   
       return response()->json(['message' => $transaction, 'status' => 'success']);
      }else{
       return response()->json(['messasge' => "Couldn't find user transaction", 'status' => 'failed']);
@@ -436,7 +436,10 @@ public function ReferralLink(Request $request){
     public function ViewSuccessReceipt(Request $request){
       $request->validate(['reference' => 'required']);
       $data = Transactions::where('reference', $request['reference'])->first();
-      return response()->json(['message' => $data]);
+      if($data){
+        return response()->json(['message' => $data]);
+      }
+      return response()->json(['message' => []]);
     }
 
     public function AirtimeToCashPercentage(Request $request){
@@ -610,7 +613,7 @@ public function ReferralLink(Request $request){
   public function FetchSpecificImage(Request $request){
     $request->validate(['username' => "required"]);
     $fetchimage = UserSignup::where('username', $request['username'])->first();
-    $getimage = asset('userimages/' .$fetchimage->profileimage);
+    $getimage = asset('userimages/' .$fetchimage->profileimage .'.'.'png');
     if($getimage){
       return response()->json(['message' => $getimage, "status" => "success"]);
     }else{

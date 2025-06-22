@@ -28,12 +28,12 @@
                       </li>
                   </Link>
 
-                  <Link href="/cheapx/dashboard/airtime" class="mb-4" replace>
+                  <!-- <Link href="/cheapx/dashboard/airtime" class="mb-4" replace>
                       <li :class="['mealxpress-navlink', { active: $page.url === '/cheapx/dashboard/airtime' } ]">
                           <i class="fa fa-lemon mealxpress-icons" ></i>
                          Airtime Package
                       </li>
-                  </Link>
+                  </Link> -->
 
                   <Link href="/cheapx/dashboard/data" class="mb-4" replace>
                     <li :class="['mealxpress-navlink', { active: $page.url === '/cheapx/dashboard/data' } ]">
@@ -49,12 +49,12 @@
                       </li>
                   </Link>
 
-                  <Link href="/cheapx/dashboard/utility" class="mb-4">
+                  <!-- <Link href="/cheapx/dashboard/utility" class="mb-4">
                     <li :class="['mealxpress-navlink', { active: $page.url === '/cheapx/dashboard/utility' } ]">
                         <i class="fas fa-store mealxpress-icons" ></i>
                        Utility Package
                     </li>
-                </Link>
+                </Link> -->
 
                 <Link href="/cheapx/dashboard/notification" class="mb-4">
                     <li :class="['mealxpress-navlink', { active: $page.url === '/cheapx/dashboard/notification' } ]">
@@ -71,12 +71,12 @@
                   </Link>
               </ul>
           </div>
-          <div class="aside-footer">
+          <!-- <div class="aside-footer">
               <div class="aside-centered">
                   <h1 class=" fs-2 text-white">Having troubles</h1>
                   <h6 class="fs-7 text-white">We are active 24/7</h6>
               </div>
-          </div>
+          </div> -->
       </div>
     </aside>
 </template>

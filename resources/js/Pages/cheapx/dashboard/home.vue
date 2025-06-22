@@ -20,7 +20,7 @@
                 </div>
               </div>
                 <div class="row mb-3">
-                    <div class="col-lg-6 col-md-12">
+                    <div class="col-lg-12 col-md-12">
                         <div class="row">
                             <div class="col-lg-6 col-12 ">
                                 <div class="card  gap-1 shadow-none card-outline mb-3">
@@ -32,13 +32,6 @@
                                    </div>
                                    <div class="div-centered mb-3 px-4 p-2">
                                     <h1 class="fs-3 fw-bold mb-3"> {{ formatCurrency(totalsales) }} </h1>
-                                    <div class="d-flex">
-                                      <div class="bg-auto-rate me-2">
-                                        <i class="fa-solid fa-arrow-up-long"></i>
-                                        +5%
-                                      </div>
-                                      <span>Vs Last Month(s)</span>
-                                    </div>
                                    </div>
                                   <Link href="">
                                     <div class="card bg-lightgrey px-4 p-1 m-0">
@@ -62,13 +55,6 @@
                                  </div>
                                  <div class="div-centered mb-3 px-4 p-2">
                                   <h1 class="fs-3 fw-bold mb-3"> {{ formattedAmount(totalcount) }} </h1>
-                                  <div class="d-flex">
-                                    <div class="bg-auto-rate me-2">
-                                      <i class="fa-solid fa-arrow-up-long"></i>
-                                      +5%
-                                    </div>
-                                    <span>Vs Last Month</span>
-                                  </div>
                                  </div>
                                 <Link href="">
                                   <div class="card bg-lightgrey px-4 p-1 m-0 shadow-none">
@@ -93,7 +79,7 @@
                         </div>
                     </div>
                     <!-- recent updated request -->
-                    <div class="col-lg-6 col-md-12">
+                    <div class="col-lg-12 col-md-12">
                       <div class="card">
                         <div class="card-body">
                             <BarChart/>
@@ -133,7 +119,7 @@
                         <tr v-if="filteredData.length === 0">
                             <td colspan="8" class="text-center">No Recent Order made </td>
                         </tr>
-                        <tr v-for="(item, index) in filteredData" :key="item.id" >
+                        <tr v-for="(item, index) in filteredData" :key="index.id" >
                           <td> {{item.username}}</td>
                             <td> ₦{{formattedAmount(item.amount)}}</td>
                             <td> {{item.type_of_purchase}}</td>

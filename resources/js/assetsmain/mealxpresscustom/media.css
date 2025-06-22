@@ -75,4 +75,13 @@
     .deletepadding{
         width: 70%;
     }
+    .bx-space-bond{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 95%;
+        margin: auto;
+        gap: 5px;
+    }
 }

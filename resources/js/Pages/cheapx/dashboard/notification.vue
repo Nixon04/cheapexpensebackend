@@ -6,85 +6,29 @@
         <NavbarComponent />
         <div class="mealxpress-content">
           <HeaderDashboard/>
-          <div class="mealxpress-main">
-            <div class="card-general-container card p-2">
-                <div class="card">
-                    <h5 class="card-header"></h5>
-                    <div class="d-flex justify-content-between px-6 me-3 ms-3">
-                        <div class="d-flex">
-                            <div class="form-input">
-                                <input type="text" class="form-control py-2" v-model="searchQuery"  placeholder="Search...">
-                            </div>
-                        </div>
-                        <div class="d-flex gap-4">
-                            <div class="form-input">
-                                <select v-model="rowsPerPage"  class="form-select py-2" @change="changevaluestate" >
-                                    <option v-for="option in dropOption" :key="option" :value="option">{{ option }}</option>
-                                </select>
-                            </div>
-                            <!-- <div class="meal-form-button">
-                                <button @click="ShowCenterModel(item)" class="togglebutton btn bg-button-submit py-3 text-sm">Add Users</button>
-                            </div> -->
-                        </div>
-                    </div>
-                    <div class="card-body">
-                    <div class="table-responsive text-nowrap">
-                      <table class="table">
-                       <thead>
-                          <tr>
-                          <th>Fullname</th>
-                          <th>Username</th>
-                          <th>Email</th>
-                          <th>contact</th>
-                          <th>profileimage</th>
-                          <th>DOB</th>
-                          <th>Reg Date</th>
-  
-                          </tr>
-                      </thead>
-                      <tbody>`
-                        <tr v-if="paginatedData.length === 0">
-                          <td colspan="8" class="text-center">
-                            No Registered User found
-                          </td>
-                        </tr>
-                          <tr v-for="(item, index) in paginatedData" :key="item.id">
-                            <td v-if="noResults">No Registered User found  </td>
-                            <td> {{item.fullname}}</td>
-                            <td> {{item.username}}</td>
-                            <td> {{item.email}}</td>
-                            <td> {{item.contact}}</td>
-                            <td><img :src="item.profileimage" style="height: 30px; height:100px"></td>
-                            <td><span class="badge bg-label-info me-1">{{item.dob}}</span></td>
-                            <td><span class="fw-bold"> {{item.created_at}}</span></td>
-                            <td>
-                      
-                    </td>
-                    </tr>
-       
-        </tbody>
-        </table>
-    </div>
-    <!-- pagination details -->
-    <div class="card p-3">
-        <div class="d-flex justify-content-between">
-            <div class="d-flex">
-                <span>Showing {{ currentPage }} to {{ totalPages }} entries</span>
-              
+          <div class="mealxpress-mai">
+            <div class="card-general-container card py-5">
+                <div class="bx-space-bond">
+                  <input 
+                  type="text"
+                   class="py-3 form-control"
+                    placeholder="Title"
+                    v-model="titlebody"
+                    >
+                  <!-- input longtext -->
+                  <textarea name=""
+                   ref="textref"
+                   @input="autoResize" 
+                   cols="5" rows="5" class="form-control mb-5"
+                    style="resize:none;overflow:hidden"
+                    v-model="message"
+                    ></textarea>
+
+                  <button @click="sendNotification()" :disabled="isAlreadyLoading" :class="[isAlreadyLoading ?'inactive-state-button-x' :'action-button']">
+                    Send Notification
+                  </button>
+                </div>
             </div>
-            <div class="d-flex gap-4">
-                <button @click="prevPage" :disabled="currentPage === 1" class="outline-pointer">prev</button>
-                <button @click="nextPage" :disabled="currentPage === totalPages" class="outline-pointer">Next</button>
-            </div>
-        </div>
-    </div>
-    <!-- end of pagination -->
-    </div>
-  </div>
-  <!--/ Bordered Table -->
-  
-        
-    </div>
         </div>
         </div>
     </div>
@@ -106,7 +50,7 @@
   import BarChart from './../../components/charts/chartview.vue';
   import { Link, usePage,Head } from '@inertiajs/vue3';
   import { useToast } from "vue-toastification";
-  import {ref, computed} from 'vue';
+  import {ref, computed, onMounted, reactive} from 'vue';
   import { Button } from 'bootstrap';
   import axios from 'axios';
   
@@ -137,6 +81,56 @@
     const currentPage = ref(1);
     const dropOption = [5, 20, 50, 100];
     const isLoading = ref(false);
+    const textref = ref(null);
+    const titlebody = ref('');
+    const message = ref('');
+
+    const isAlreadyLoading = ref(false);
+
+
+
+    const sendNotification = async ()  => {
+      const toast = useToast();
+
+    const payload = reactive({
+      title:  titlebody.value,
+      body: message.value,
+    });
+
+    try{
+      isAlreadyLoading.value = true;
+      const response = await axios.post('/sendnotification', payload);
+      if(response.status == 200){
+        toast.success('Payload successful',{
+            hideProgressBar:true,});
+      }else{
+        toast.failed('Payload successful',
+          {
+            hideProgressBar:true,
+            
+          }
+        );
+      }
+    }catch(e){
+      console.log('Console information ', e);
+    }
+    finally{
+      isAlreadyLoading.value = false;
+
+    }
+  
+    }
+
+
+
+
+    const autoResize = () => {
+      const el = textref.value;
+      if(el){
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+      }
+    }
   
   
     const filteredData = computed(() => {
@@ -171,6 +165,10 @@
     const totalPages = computed(() => {
       return Math.ceil(filteredData.value.length / rowsPerPage.value);
     });
+
+    onMounted(() => {
+      autoResize(); // In case there is pre-filled content
+    });
   
   
   
@@ -185,7 +183,13 @@
       noResults,
       paginatedData,
       dropOption,
-      currentPage
+      currentPage,
+      autoResize,
+      textref,
+      sendNotification,
+      isAlreadyLoading,
+      titlebody,
+      message,
     }
     }
   }

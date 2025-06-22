@@ -12,6 +12,7 @@
     --bg-border-first: #E6F5F9;
     --bg-border-second: #EFFCEF;
     --bg-border-third: #EFF6FC;
+    --color-white: #fff;
 }
 
 
@@ -266,8 +267,23 @@ h1,h2,h3,h4,h5,h6{
     padding-bottom: 50px;
     padding-top: 20px;
   }
-  
 
+  .btn-action{
+    background: var(--bg-primary-main);
+    padding: 10px 15px;
+    color: #fff;
+    border-radius: 6px;
+    border: none;
+    transition:  all 0.3s ease-in;
+  }
+  .btn-action > span{
+    color: var(--color-white)!important;
+    font-weight: 20px!important;
+    font-size: 12px;
+  }
+  .btn-action:focus{
+    transform: scale(0.98);
+  }
 /* aside designs */
 
   
@@ -575,3 +591,41 @@ ul li{
     
 }
 /* end of modal dialog image */
+.inactive-state-button{
+    background: #f1f1f1;
+    padding: 10px 15px;
+    color: #fff;
+    border-radius: 6px;
+    border: none;
+    transition:  all 0.3s ease-in;
+}
+
+.inactive-state-button-x{
+    background: #f1f1f1;
+    padding: 10px 15px;
+    color: #fff;
+    border-radius: 6px;
+    border: none;
+    transition:  all 0.3s ease-in;
+    width: 100%;
+}
+
+.bx-space-bond{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 60%;
+    margin: auto;
+    gap: 5px;
+}
+
+.action-button{
+    padding: 20px 40px;
+    width: 100%;
+    background: var(--bg-primary-main);
+    color: var(--color-white);
+    border: none;
+    border-radius: 12px;
+}
+

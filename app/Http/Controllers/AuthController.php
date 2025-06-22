@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\UserSignup;
 use App\Models\Transactions;
+use App\Models\DataPackList;
 use App\Models\CablePackages;
 
 use Inertia\Inertia;
@@ -94,6 +95,7 @@ class AuthController extends Controller
         if ($entry->profileimage === '0') {
             $entry->profileimage = "http://127.0.0.1:8000/userimages/0.png";
         } else{
+            // route('mealxpress_drinks', ['filename' => $url->drinkimage ?? '']);
         $entry->profileimage = "http://127.0.0.1:8000/userimages/". $entry->profileimage;
         }
         return $entry;
@@ -124,7 +126,7 @@ class AuthController extends Controller
         return Inertia::render('cheapx/auth/login');
        }
 
-       $populate = PurchaseDataItems::orderBy('id','DESC')->get(); 
+       $populate = DataPackList::orderBy('id','DESC')->get(); 
     return Inertia::render('cheapx/dashboard/data', ['data' => $populate]);
  }
 

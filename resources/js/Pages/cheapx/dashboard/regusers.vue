@@ -48,7 +48,7 @@
                           No Registered User found
                         </td>
                       </tr>
-                        <tr v-for="(item, index) in paginatedData" :key="item.id">
+                        <tr v-for="(item, index) in paginatedData" :key="index.id" @click="modelsetup(item)">
                           <td v-if="noResults">No Registered User found  </td>
                           <td> {{item.fullname}}</td>
                           <td> {{item.username}}</td>
