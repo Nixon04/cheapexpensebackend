@@ -24,14 +24,15 @@ use App\Models\DataPackList;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Http\Client\ConnectionException;
 
 class ServicePostController extends Controller
 {
 
 
     public function CreateSavings(Request $request){
-        // $url = "https://sandbox.payscribe.ng/api/v1//savings/create";
-        $url = "https://sandbox.payscribe.ng/api/v1/data/lookup?network=airtel";
+        // $url = "https://payscribe.ng/api/v1//savings/create";
+        $url = "https://payscribe.ng/api/v1/data/lookup?network=airtel";
 
         $headers = [
             'Authorization' => 'Bearer ' . env('PAYSCRIBE_PUBLIC_KEY'),
@@ -84,7 +85,7 @@ class ServicePostController extends Controller
         $monthStart = $start->copy()->startOfMonth()->toDateString();
         $monthEnd = $start->copy()->endOfMonth()->toDateString();
 
-        $url = "https://sandbox.payscribe.ng/api/v1/cards/$userCardRefId/transactions?start_date=$monthStart&end_date=$monthEnd&page_size=100&page=1";
+        $url = "https://payscribe.ng/api/v1/cards/$userCardRefId/transactions?start_date=$monthStart&end_date=$monthEnd&page_size=100&page=1";
 
         $headers = [
             'Authorization' => 'Bearer ' . env('PAYSCRIBE_PUBLIC_KEY'),
@@ -145,7 +146,7 @@ class ServicePostController extends Controller
             $userCardRefId = $querydollaramount->card_id;
         }
 
-        $url = "https://sandbox.payscribe.ng/api/v1/cards/$userCardRefId/terminate";
+        $url = "https://payscribe.ng/api/v1/cards/$userCardRefId/terminate";
         $headers = [
             'Authorization' => 'Bearer ' . env('PAYSCRIBE_PUBLIC_KEY'),
             'Content-Type' => 'application/json',
@@ -231,7 +232,7 @@ class ServicePostController extends Controller
             $userCardRefId = $querydollaramount->card_id;
         }
 
-        $url = "https://sandbox.payscribe.ng/api/v1//cards/$userCardRefId/withdraw";
+        $url = "https://payscribe.ng/api/v1//cards/$userCardRefId/withdraw";
         $headers = [
             'Authorization' => 'Bearer ' . env('PAYSCRIBE_PUBLIC_KEY'),
             'Content-Type' => 'application/json',
@@ -316,7 +317,7 @@ class ServicePostController extends Controller
             $getuseramount->decrement('user_amount', $request->input('rate_amount'));
             $userRef = $getuserref->card_id;
     
-            $url = "https://sandbox.payscribe.ng/api/v1/cards/$userRef/topup";
+            $url = "https://payscribe.ng/api/v1/cards/$userRef/topup";
             $headers = [
                 'Authorization' => 'Bearer ' . env('PAYSCRIBE_PUBLIC_KEY'),
                 'Content-Type' => 'application/json',
@@ -368,20 +369,42 @@ class ServicePostController extends Controller
         return response()->json(['message' => []]);
       }
 
-    public function ListDataPackages(Request $request){
-        $request->validate([
-          'network_type' => 'required',
-        ]);
-        $queryselect = DataPackList::where('network', $request->input('network_type'))->orderBy('id', 'DESC')->get();
-        $optionlists = $queryselect->pluck('duration_type')->unique()->sort()->values()->toArray();
-        if($queryselect){
-            return response()->json([
-                'options' => $optionlists,
-                'data' => $queryselect,
-            ]);
-        }
-        return response()->json(['message' => [], 'status' => 'error']);
+      
+
+      public function ListDataPackages(Request $request)
+      {
+          $request->validate([
+              'network_type' => 'required',
+          ]);
+      
+          $queryselect = DataPackList::where('network', $request->input('network_type'))
+                          ->orderBy('id', 'DESC')
+                          ->get();
+      
+          $customOrder = ['cheapy','daily', 'weekly', 'monthly', '2Month', '3Month', 'yearly'];
+      
+          $optionlists = $queryselect->pluck('duration_type')
+              ->unique()
+              ->sortBy(function ($item) use ($customOrder) {
+                  $index = array_search($item, $customOrder);
+                  return $index === false ? PHP_INT_MAX : $index;
+              })
+              ->values()
+              ->toArray();
+      
+          if ($queryselect) {
+              return response()->json([
+                  'options' => $optionlists,
+                  'data' => $queryselect,
+              ]);
+          }
+      
+          return response()->json([
+              'message' => [],
+              'status' => 'error'
+          ]);
       }
+      
 
       
     public function CurrentConversationRate(){
@@ -465,7 +488,7 @@ class ServicePostController extends Controller
         ]);
        
         try{
-        $url = "https://sandbox.payscribe.ng/api/v1/cards/558b6d65-48f1-4309-8fd4-c48ff07494b6/unfreeze";
+        $url = "https://payscribe.ng/api/v1/cards/558b6d65-48f1-4309-8fd4-c48ff07494b6/unfreeze";
         $headers =  [
             'Authorization' => 'Bearer '.env('PAYSCRIBE_PUBLIC_KEY'),
             'content-Type' => 'application/json',
@@ -520,7 +543,7 @@ class ServicePostController extends Controller
                 return response()->json(['message' => 'Card not found or does not belong to user', 'status' => 'error']);
             }
     
-            $url = "https://sandbox.payscribe.ng/api/v1//cards/cdaa128b-e591-4efc-830f-185a2973f865/freeze";
+            $url = "https://payscribe.ng/api/v1//cards/cdaa128b-e591-4efc-830f-185a2973f865/freeze";
             $headers = [
                 'Authorization' => 'Bearer ' . env('PAYSCRIBE_PUBLIC_KEY'),
                 'Content-Type' => 'application/json',
@@ -645,7 +668,7 @@ class ServicePostController extends Controller
                     // card creation
                             $customer_uid = $queryuserstatus->customer_id;
                             // since we have gotten the customer id if correctly in place, lets create the card and fix in the billing address
-                            $link = "https://sandbox.payscribe.ng/api/v1//cards/create";
+                            $link = "https://payscribe.ng/api/v1//cards/create";
                             $headercollection =  [
                                 'Authorization' => 'Bearer '.env('PAYSCRIBE_PUBLIC_KEY'),
                                 'content-Type' => 'application/json',
@@ -801,193 +824,11 @@ class ServicePostController extends Controller
 
 
   
-    public function Webhook(Request $request){
-        $paymentDetails = $request->getContent();
-
-        // Retrieve headers
-        $headers = $request->headers->all();
-        $headersJson = json_encode($headers);
-
-        // Save the payload and headers to files
-        file_put_contents(public_path("file3.html"), "<pre>" . htmlspecialchars($paymentDetails) . "</pre>");
-        file_put_contents(public_path("file4.html"), "<pre>" . htmlspecialchars($headersJson) . "</pre>");
-
-        // Get Paystack signature header
-        $paystackSignature = $request->header('x-paystack-signature');
-
-        define('SECOND_SECRET_KEY', env('SECOND_SECRET_KEY'));
-        if ($paystackSignature !== hash_hmac('sha512', $paymentDetails, SECOND_SECRET_KEY)) {
-            return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 400);
-        }
-
-        $result= json_decode($paymentDetails);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            Log::error('JSON Decode Error', ['error' => json_last_error_msg(), 'content' => $paymentDetails]);
-            return response()->json(['error' => 'Invalid JSON'], 400);
-        }
-    
-
-        if(isset($result->event)){
-        Log::info('paymentreference', ['checker' => $result]);
-        if($result->event == "dedicatedaccount.assign.success"){
-            Log::info('reference', ['status' => $result->data->customer]);
-        }
-    }
-
-      
-        if($result->event == "transfer.success"){
-            
-       try{
-            
-          $amount = $result->data->amount;
-          $reference_id = $result->data->reference;
-          $status = $result->data->status;
-          
-          Log::info('all_status', ['status' => $status, 'amount' => $amount, 'reference' => $reference_id]);
-         $validatetransfer = Transactions::where('reference', $reference_id)->first();
-         if($validatetransfer){
-             $validatetransfer->update(['data_type' => 'Transfer', 'status' => $status]);
-             Log::info('info', ['statusreport' => 'Already found']);
-             return;
-         }else{
-            
-               Log::info('info', ['statusreport' => ' status log']);
-               return;
-         }
-         
-       }catch(\Exception $e){
-         Log::info('reference', ['delug' => $e->getMessage()]);
-     }
-        }
-         
-    
-        else if($result->event == "transfer.failed"){
-             $amount = $result->data->amount / 100;
-          $reference_id = $result->data->reference;
-          $status = $result->data->status;
-         
-          $validatetransfer = Transactions::where('reference', $reference_id)->first();
-         if($validatetransfer){
-             $validatetransfer->update(['data_type' => 'Transfer', 'status' => $status]);
-             Log::info('info', ['statusreport' => 'Already found']);
-             return;
-         }else{
-            
-               Log::info('info', ['statusreport' => ' status log']);
-               return;
-         }
-         
-     }else if($result->event == "transfer.reversed"){
-          $amount = $result->data->amount / 100;
-          $reference_id = $result->data->reference;
-          $status = $result->data->status;
-         $validatetransfer =Transactions::where('reference', $reference_id);
-         $validatetransfer = Transactions::where('reference', $reference_id)->first();
-         if($validatetransfer){
-             $validatetransfer->update(['data_type' => 'Transfer', 'status' => $status]);
-             
-            //  refunding user money back to his/her main wallet
-             
-              $trackrefuser = Transactions::where('reference', $reference_id)->first();
-              
-             if($trackrefuser){
-                 $username  = $trackrefuser->username;
-                 
-                 $updateuseramount = UserAccountDetails::where('username', $username)->first();
-                 if($updateuseramount){
-                     $newamount = $updateuseramount->user_amount + $amount;
-                     $updateuseramount->update(['user_amount' => $newamount ]);
-                 }
-                 
-         }
-         
-             Log::info('info', ['statusreport' => 'Already found']);
-             return;
-         }else{
-            
-               Log::info('info', ['statusreport' => ' status log']);
-               return;
-         }
-     }
-     
-     
-    //  charge for virtual payment slip
-    
-    
-    else if($result->event == "charge.success"){
-    $amount = $result->data->amount / 100;
-    $reference = $result->data->reference;
-    $status = $result->data->status;
-    $username = $result->data->customer->first_name;
-    $customer_ref_id = $result->data->customer->customer_code;
-    
-    $notify_transaction_ref = Transactions::where('reference', $reference)->first();
-
-    Log::info('reference', ['referenceLog' => $notify_transaction_ref->reference ?? "Nothing was found", 'initialref' => $reference]);
-    
-    try{
-    
-    if(!$notify_transaction_ref){
-    
-    $date = Carbon::now()->setTimeZone('Africa/Lagos')->format('d M Y h:i A');    
-        
-    $useramountupdate = UserAccountDetails::where('username', $username)->first();
-    if($useramountupdate){
-        $newamount = $useramountupdate->user_amount + $amount;
-        $useramountupdate->update(['user_amount' => $newamount]);
-    }
-    
-      $transaction_data = new Transactions();
-         $transaction_data->username = $username;
-         $transaction_data->amount = $amount;
-         $transaction_data->type_of_purchase = 'VirtualWallet';
-         $transaction_data->sub_type_purchase = "AutoFund";
-         $transaction_data->data_type = "Virtual";
-         $transaction_data->status = $status;
-         $transaction_data->ref_num_purchase = "";
-         $transaction_data->reference = $reference;
-         $transaction_data->date_of_purchase = $date;
-         $transaction_data->save();
-         
-         if($transaction_data){
-             Log::info('Arraytrue', ['updated_successfully', 'true']);
-         }else{
-                Log::info('Arraytrue', ['updated_unsuccessfully', 'false']);
-         }
-    }else{
-             Log::info('CheckLog', ['updated_successfully', 'false statemet']);
-    }
-    }catch(\Exception $e){
-        Log::info('Errorlog', ['Log data' => $e]);
-    }
-        
-        // Log::info('state', ['amount' => $amount, 'reference' => $reference, 'status' => $status, 'username' => $username, 'customer_ref' => $customer_ref_id ]);
-    }
-    
-     else if($result->event == "dedicatedaccount.assign.success"){
-         $first= $result->data->customer->first_name;
-         $account_name = $result->data->dedicated_account->account_name;
-         $account_number = $result->data->dedicated_account->account_number;
-
-         $checkvirtualname = VirtualAccounts::where('username', $first)->first();
-         if($checkvirtualname){
-           $checkvirtualname->update(['account_name' => $account_name, 'account_number' => $account_number ]);
-         }else{
-            return response()->json(['message' => 'Names do not align']);
-         }
-      
-         Log::info('information', ['name' => $first]);
-        return response()->json(['message' => 'Dedicated account received']);
-     }
-    }
-        
- 
 
     public function AssignDedicatedVirtual(Request $request){
          $url = "https://api.paystack.co/dedicated_account/assign";
          $headers = [
-            'Authorization' => "Bearer ".env('TEST_PAYSTACK_KEY'),
+            'Authorization' => "Bearer ".env('PAYSTACK_SECRET_KEY'),
             'accept' => 'application/json',
         ];
         $response = Http::withHeaders($headers)->post($url, [
@@ -1045,7 +886,7 @@ class ServicePostController extends Controller
 
           $url = "https://api.paystack.co/bank/resolve?account_number=$accountnumber&bank_code=$accountcode";
           $headers = [
-            'Authorization' => "Bearer ". env('TEST_PAYSTACK_KEY'),
+            'Authorization' => "Bearer ". env('PAYSTACK_SECRET_KEY'),
             'accept' => 'application/json',
         ];
         $requestcall = Http::withHeaders($headers)->get($url);
@@ -1064,7 +905,7 @@ class ServicePostController extends Controller
             // create a recipient 
             $url = "https://api.paystack.co/transferrecipient";
             $headers = [
-                'Authorization' => "Bearer ". env('TEST_PAYSTACK_KEY'),
+                'Authorization' => "Bearer ". env('PAYSTACK_SECRET_KEY'),
                 'accept' => 'application/json',
             ];
             $response = Http::withHeaders($headers)->post($url, [
@@ -1145,7 +986,7 @@ class ServicePostController extends Controller
 
     try{
         DB::beginTransaction();
-        $url = "https://sandbox.payscribe.ng/api/v1/customers/create/full";
+        $url = "https://payscribe.ng/api/v1/customers/create/full";
         $headers = [
             'Authorization' => 'Bearer '.env('PAYSCRIBE_PUBLIC_KEY'),
             'content-Type' => 'application/json',
@@ -1225,7 +1066,7 @@ public function ValidateBvnAndNin(Request $request){
     $type = $request->input('type');
     $value = $request->input('value');
 
-    $url = "https://sandbox.payscribe.ng/api/v1/kyc/lookup?type=$type&value=$value";
+    $url = "https://payscribe.ng/api/v1/kyc/lookup?type=$type&value=$value";
     $headers = [
         'Authorization' => 'Bearer '.env('PAYSCRIBE_PUBLIC_KEY'),
         'Accept' => 'application/json',
@@ -1333,8 +1174,9 @@ private function saveBase64Image($base64Image){
             'recipient' => 'required',
             'currentdate' => 'required'
         ]);
+        try{
+            DB::beginTransaction();
         
-
         $checktransact = Transactions::where('reference', $request['reference'])->first();
         if($checktransact){
             return response()->json(['message' => 'can\'t use duplicated references', 'status' => 'error']);
@@ -1355,20 +1197,30 @@ private function saveBase64Image($base64Image){
 
         $url = "https://api.paystack.co/transfer";
         $headers = [
-            'Authorization' => "Bearer ".env('TEST_PAYSTACK_KEY'),
+            'Authorization' => "Bearer ".env('PAYSTACK_SECRET_KEY'),
             'accept' => 'application/json',
         ];
         $requeststatus = Http::withHeaders($headers)->post($url, [
             "source" => "balance", 
             "reason" => $request->input('reason'), 
-            "amount" => $request->input('amount'), 
+            "amount" => $request->input('amount') * 100, 
             "reference" => $request->input('reference'),
             "recipient" => $request->input('recipient'),
             // "reason" => $request->input('reasons'),
         ]);
-        try{
+    
 
-       if($requeststatus->successful()){
+       if($requeststatus->successful() && $requeststatus){
+        $status_log = $requeststatus->getBody();
+
+        if($status_log->status == false){
+            return response()->json([
+                'message' => 'Oops seems there is an issue, please try again later',
+                'status' => 'error',
+            ]);
+        }
+
+        Log::info('Transfer Log', ['status ' => $status_log]);
          $transaction_data = new Transactions();
          $transaction_data->username = $request->input('username');
          $transaction_data->amount = $request['amount'];
@@ -1382,16 +1234,23 @@ private function saveBase64Image($base64Image){
          $transaction_data->save();
 
          if($transaction_data){
+            DB::commit();
             return response()->json(['message' => 'Successful', 'status' => 'success']);
          }else{
             return response()->json(['message' => 'Not successful', 'status' => 'failed']);
          }
-     }else{
+        }else{
+        $status_log = $requeststatus->getBody();
+        Log::info('Error Log', ['status ' => $status_log]);
+        DB::rollBack();
         $requeststatus->json();
                 return response()->json(['message' => $requeststatus]);
             }
+     
         }catch(\Exception $e){
-            return response()->json(['message' => $e->getMessage()]);
+            DB::rollBack();
+            Log::info('Transfer Check', ['status' => $e->getMessage()]);
+            return response()->json(['message' => 'Oops seems something went wrong', 'status' => 'error' ]);
         }
 }
 
@@ -1411,7 +1270,7 @@ private function saveBase64Image($base64Image){
             public function FetchAllBanks(Request $request){
                 $url = "https://api.paystack.co/bank";
                 $headers = [
-                    'secret-key' => env('TEST_PAYSTACK_KEY'),
+                    'secret-key' => env('PAYSTACK_SECRET_KEY'),
                     'public_key' => env('PAYSTACK_PUBLIC_KEY'),
                     'accept' => 'application/json',
                 ];
@@ -1475,7 +1334,7 @@ public function fetchCableSubscription(Request $request){
 {
     $request->validate([
         "username" => 'required|string',
-        "amount" => 'required|integer|min:10', // Minimum amount set to 20
+        "amount" => 'required|integer|min:10', 
         "type_of_purchase" => 'required',
         "sub_type_purchase" => 'required',   
         "ref_num_purchase" => 'required',
@@ -1485,10 +1344,11 @@ public function fetchCableSubscription(Request $request){
         "reference" => 'required|unique:transactions,reference',
     ]);  
 
+    try {
 
+        DB::beginTransaction();
         // Fetch user balance with row-level locking
         $check_amount = UserAccountDetails::where('username', $request->input('username'))->first();
-
         if (!$check_amount || $check_amount->user_amount < $request->input('amount')) {
             return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
         }else{
@@ -1515,17 +1375,20 @@ public function fetchCableSubscription(Request $request){
             'accept' => 'application/json',
         ];
 
-        // Make API request to VTPass
-        try {
+        // |unique:transactions,reference
             $response = Http::withHeaders($headers)->post($url, [
-                'request_id' => $generated_reference, // Use generated reference
+                'request_id' => $generated_reference,
                 'serviceID' => $request->input('sub_type_purchase'),
                 'amount' => $request->input('amount'),
                 'phone' => $request->input('ref_num_purchase'),
             ]);
 
-            if ($response->successful()) {
-              
+            Log::info('Airtime Payloads', ['status' =>  $generated_reference,
+             ]);
+
+            if ($response->successful() && $response) {
+                $status_log = $response->getBody();
+                Log::info('AirtimeLog', ['status' => $status_log]);
                 $transaction_data = new Transactions();
                  $transaction_data->username = $request['username'];
                  $transaction_data->amount = $request['amount'];
@@ -1538,12 +1401,22 @@ public function fetchCableSubscription(Request $request){
                  $transaction_data->reference = $request['reference'];
                  $transaction_data->date_of_purchase = $request->input('date_of_purchase');
                  $transaction_data->save();
-
+                  DB::commit();
                 return response()->json(['message' => 'success', 'status' => 'success']);
             } else {
-                return response()->json(['message' => 'Airtime Purchase Failed', 'status' => 'error']);
+                DB::rollBack();
+                $status_log = $response->getBody();
+                Log::info('AirtimeLog', ['status' => $status_log]);
+                return response()->json(['message' => $response->body(), 'status' => 'error']);
             }
-        } catch (\Exception $e) {
+        }
+        catch(ConnectionException $e){
+            return response()->json([
+                'message' => 'Network Error',
+                'status' => 'error',
+            ]);
+        }
+        catch (\Exception $e) {
             Log::error('Error purchasing airtime: ' . $e->getMessage());
             return response()->json(['message' => 'An error occurred', 'status' => 'error']);
         }
@@ -1565,15 +1438,6 @@ public function DataPurchase(Request $request){
         "plan" => "required",
     ]);
 
-
-    // Log::info('DataReference' , [
-    //     'error' => $request['reference'],
-    // ]);
-
-
-    // return;
-
-
     try{
 
  DB::beginTransaction();
@@ -1593,18 +1457,20 @@ public function DataPurchase(Request $request){
       $check_amount->update(['user_amount' => $new_amount]);
    }
 
-    $url="https://sandbox.payscribe.ng/api/v1/data/vend";
+    $url="https://api.payscribe.ng/api/v1/data/vend";
     $headers = [
         'Authorization' => "Bearer ".env('PAYSCRIBE_PUBLIC_KEY'),
         "accept" => "application/json",
     ];
 
-    $requestDataCall = Http::withHeaders($headers)->post($url,[
+    $requestDataCall = Http::withHeaders($headers)
+    ->post($url,[
         "plan" => $request->input('plan'),
         "recipient" => $request->input('ref_num_purchase'),
         "network" => $request->input('network_id'),
         "ref" => $request->input('reference'),
     ]);
+
 
     Log::info('reference', ['plan' => $request->input('plan'), 'network' => $request->input('network_id')]);
      DB::commit();
@@ -1656,7 +1522,7 @@ public function DataPurchase(Request $request){
     }
   
 }
-catch (\Illuminate\Http\Client\ConnectionException $e) {
+catch (ConnectionException $e) {
     DB::rollBack();
     return response()->json(['message' => 'Network connection issue', 'status' => 'error']);
 }

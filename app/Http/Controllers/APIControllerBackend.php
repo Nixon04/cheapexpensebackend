@@ -345,6 +345,8 @@ public function ReferralLink(Request $request){
 
         // dd($request->input('fcmtoken'));
 
+        Log::info('LoginController', ['status' =>  $request->input('fcmtoken')]);
+
         try{
 
         $checkstatusdeletecall = DeactivateAccount::where('username', $request['username'])->first();
@@ -354,7 +356,7 @@ public function ReferralLink(Request $request){
 
         $validatecheck = UserSignup::where('username', $request->input('username'))->orWhere('email', $request->input('username'))->first();
             if($validatecheck && hash::check($request['password'], $validatecheck->password)){
-              $validatecheck->update(['fcmtoken' => $request->input('fcmtoken') || '']);
+              $validatecheck->update(['fcmtoken' => $request->input('fcmtoken')]);
                 return response()->json(['message' => 'information correct', 'status' =>'success', 'username' => $validatecheck->username]);
             }else{
                 return response()->json(['message' => 'sorry we couldn\'t validate your response', 'status' => 'failed']);
@@ -369,19 +371,35 @@ public function ReferralLink(Request $request){
          'username' => 'required',
          'pin' => 'required',
        ]);
-
-
+        try{
        $check = Usersignup::where('username', $request['username'])->first();  
-       try{    
-       if($request['pin'] == $check->users_id){
-        return response()->json(['message' =>'successful','status'=>'success']);
-       }else{
-        return response()->json(['message' =>'not successful', 'status' => 'failed']);
+        if($check){
+          if($request->input('pin') == $check->users_id){
+            return response()->json(['message' =>'successful','status'=>'success']);
+          }else{
+            return response()->json(['message' =>'not successful', 'status' => 'failed']);
+          }
+        }
+        else{
+          return response()->json([
+            'message' => 'User not found',
+            'status' => 'error',
+          ]);
+        }
+        }
+       catch(\Illuminate\Http\Client\ConnectionException $e){
+        return response()->json([
+          'message' => 'Network Error',
+          'status' => 'error',
+        ]);
 
        }
-       }catch(\Exception $error){
+      
+       catch(\Exception $error){
+        Log::info('LoginwithPin', ['status' =>  $error]);
         return response()->json($error->getMessage());
        }
+
     }
     public function UserBalance(Request $request){
       $request->validate(['username' => 'required']);

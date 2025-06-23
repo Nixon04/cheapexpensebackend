@@ -90,13 +90,25 @@ private function applyMarkup($amount){
             $all_plans = [];
     
             foreach ($networks as $network) {
-                $url = "https://sandbox.payscribe.ng/api/v1/data/lookup?network={$network}";
+                $url = "https://api.payscribe.ng/api/v1/data/lookup?network={$network}";
                 $headers = [
                     'Authorization' => 'Bearer ' . env('PAYSCRIBE_PUBLIC_KEY'),
                     'Content-Type' => 'application/json',
+                    // 'User-Agent' => 'Mozilla/5.0 (compatible; MyLaravelApp/1.0)'
                 ];
+
+                $requestProcess = Http::withHeaders($headers)
+                // ->withOptions([
+                //     'allow_redirects' => false
+                // ])
+                ->get($url);
+
+                // if ($requestProcess->status() === 308) {
+                //     Log::warning("Redirected to: " . $requestProcess->header('Location'));
+                //     Log::error("Failed to fetch plans for network: {$network}");
+                //     continue;
+                // }
     
-                $requestProcess = Http::withHeaders($headers)->get($url);
     
                 if ($requestProcess->successful()) {
                     $json_data = json_decode($requestProcess->body());
@@ -177,6 +189,7 @@ private function applyMarkup($amount){
                     }
                 } else {
                     Log::error("Failed to fetch plans for network: {$network}");
+                    // continue;
                 }
             }
     

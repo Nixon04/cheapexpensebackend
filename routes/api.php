@@ -11,9 +11,10 @@ use App\Http\Controllers\Webhook;
 // $path = $image->storeAs('mealxpress_images', $imageName, 'local');
 
 // post request 
-Route::prefix('')->group(function(){
+Route::prefix('')->group(callback: function(){
    Route::controller(Webhook::class)->group(function(){
       Route::post('verifyhook', 'BackHook');
+      Route::post('webhook',  'WebhookHandle');
    });
    // APIControllerBackend BOth Post and Get Request 
    Route::controller(APIControllerBackend::class)->group(function(){
@@ -84,7 +85,7 @@ Route::prefix('')->group(function(){
     ->middleware('throttle:virtual_accounts');
     Route::get('showtoken',  'ShowToken');
     Route::get('fetchnewdata',  'NewDataFetch');
-    Route::post('webhook',  'Webhook');
+
     Route::post('uzowebhook',  'UzoBest');
     Route::post('vtpasswebhook',  'Vtpasswebhook');
     Route::post('payscribehook',   'PayscribeWebhook');
