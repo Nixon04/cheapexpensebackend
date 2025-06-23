@@ -192,18 +192,19 @@ class APIControllerBackend extends Controller
 
       $url = "https://api.paystack.co/dedicated_account/assign";
       $headers = [
-         'Authorization' => "Bearer ".env('TEST_PAYSTACK_KEY'),
+         'Authorization' => "Bearer ".env('PAYSTACK_SECRET_KEY'),
          'accept' => 'application/json',
      ];
      $response = Http::withHeaders($headers)->post($url, [
          "email" => $request['email'],
          "first_name" => $request['username'],
          "middle_name" => " ",
-         "last_name" => "Doe",
+         "last_name" => " ",
          "phone" => $request['contact'],
-         "preferred_bank" => "test-bank",
+         "preferred_bank" => "wema-bank",
          "country" => "NG"
      ]);
+     
      if($response->successful()){
        $checkvirtualaccountuser = VirtualAccounts::where('username', $request['username'])->first();
        if($checkvirtualaccountuser){
