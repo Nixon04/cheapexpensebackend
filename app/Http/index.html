@@ -1,0 +1,80 @@
+public function AirtimePurchase(Request $request)
+{
+    $request->validate([
+        "username" => 'required|string',
+        "amount" => 'required|integer|min:10', // Minimum amount set to 20
+        "type_of_purchase" => 'required',
+        "sub_type_purchase" => 'required',   
+        "ref_num_purchase" => 'required',
+        "userpin" => 'required',
+        "date_of_purchase" => 'required',
+        "data_type" => 'required',
+        "reference" => 'required|unique:transactions,reference',
+    ]);  
+
+
+        // Fetch user balance with row-level locking
+        $check_amount = UserAccountDetails::where('username', $request->input('username'))->first();
+
+        if (!$check_amount || $check_amount->user_amount < $request->input('amount')) {
+            return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
+        }else{
+                    $check_amount->update([
+                    'user_amount' => $check_amount->user_amount - $request->input('amount'),
+                ]);
+        }
+
+        // Generate unique reference ID
+        $currentyear = Carbon::now()->timezone('Africa/Lagos')->format('Ymdhi');
+        $rand_ref = mt_rand(11111111, 99999999);
+        $generated_reference = $currentyear . $rand_ref;
+
+        // Validate user PIN
+        $password_pin_check = UserSignup::where('users_id', $request->input('userpin'))->first();
+        if (!$password_pin_check) {
+            return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
+        }
+
+        $url = "https://vtpass.com/api/pay";
+        $headers = [
+            'api-key' => env('VTPASS_API_KEY'),
+            'secret-key' => env('VTPASS_SECRET_KEY'),
+            'accept' => 'application/json',
+        ];
+
+        // Make API request to VTPass
+        try {
+            $response = Http::withHeaders($headers)->post($url, [
+                'request_id' => $generated_reference, // Use generated reference
+                'serviceID' => $request->input('sub_type_purchase'),
+                'amount' => $request->input('amount'),
+                'phone' => $request->input('ref_num_purchase'),
+            ]);
+
+            if ($response->successful()) {
+              
+                $transaction_data = new Transactions();
+                 $transaction_data->username = $request['username'];
+                 $transaction_data->amount = $request['amount'];
+                 $transaction_data->type_of_purchase = $request['type_of_purchase'];
+                 $transaction_data->sub_type_purchase = $request['sub_type_purchase'];
+                 $transaction_data->data_type = $request['data_type'];
+                 $transaction_data->status = $request['status'];
+                 
+                 $transaction_data->ref_num_purchase = $request['ref_num_purchase'];
+                 $transaction_data->reference = $request['reference'];
+                 $transaction_data->date_of_purchase = $request->input('date_of_purchase');
+                 $transaction_data->save();
+
+                return response()->json(['message' => 'success', 'status' => 'success']);
+            } else {
+                return response()->json(['message' => 'Airtime Purchase Failed', 'status' => 'error']);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error purchasing airtime: ' . $e->getMessage());
+            return response()->json(['message' => 'An error occurred', 'status' => 'error']);
+        }
+    
+}
+    
+    
