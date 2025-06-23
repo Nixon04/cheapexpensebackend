@@ -65,6 +65,7 @@ Route::prefix('')->group(callback: function(){
    Route::controller(ServicePostController::class)->group(function(){
     Route::post('purchaseairtime',  'AirtimePurchase');
     Route::post('purchasedata',  'DataPurchase');
+    Route::post('newpurchasedata', 'NewDataPurchase');
 
     Route::post('fetchcablesubscriptions',  'FetchCableSubscription');
     Route::post('verifycable',  'VerifyCableMeter');

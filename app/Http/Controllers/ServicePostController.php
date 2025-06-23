@@ -1423,7 +1423,7 @@ public function fetchCableSubscription(Request $request){
     
 }
     
-public function DataPurchase(Request $request){
+public function NewDataPurchase(Request $request){
     $request->validate([
         "username" => "required",
         "amount" => 'required|integer|min:1',
@@ -1510,6 +1510,7 @@ public function DataPurchase(Request $request){
         if($transaction_data){
             return response()->json(['message' => $status, 'status' => 'success']);
         }
+        
        }else{
         $check_amount->increment('user_amount', $request['amount']);
         return response()->json(['message' => 'Error Couldn\'t fully transact, amount refunded back', 'status' => 'error']);
@@ -1536,116 +1537,116 @@ catch(\Exception $e){
     
 }
  
-    // public function DataPurchase(Request $request){
-    //     $request->validate([
-    //         "username" => "required",
-    //         "amount" => 'required|integer|min:1',
-    //         "type_of_purchase" => "required",
-    //         "data_type" => 'required',
-    //         "status" => 'required',
-    //         "userpin" => 'required',
-    //         "ref_num_purchase" => 'required',
-    //         "date_of_purchase" => 'required',
-    //         "reference" => 'required|unique:transactions,reference',
-    //         "network" => "required",
-    //         "plan" => "required",
-    //     ]);
+    public function DataPurchase(Request $request){
+        $request->validate([
+            "username" => "required",
+            "amount" => 'required|integer|min:1',
+            "type_of_purchase" => "required",
+            "data_type" => 'required',
+            "status" => 'required',
+            "userpin" => 'required',
+            "ref_num_purchase" => 'required',
+            "date_of_purchase" => 'required',
+            "reference" => 'required|unique:transactions,reference',
+            "network" => "required",
+            "plan" => "required",
+        ]);
 
 
 
-    //  DB::beginTransaction();
+     DB::beginTransaction();
 
-    //    $password_pin_check = UserSignup::where('users_id', $request['userpin'])->first();
-    //    if(!$password_pin_check){
-    //       return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
-    //    }
-    //    $check_amount = UserAccountDetails::where('username', $request['username'])->first();
+       $password_pin_check = UserSignup::where('users_id', $request['userpin'])->first();
+       if(!$password_pin_check){
+          return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
+       }
+       $check_amount = UserAccountDetails::where('username', $request['username'])->first();
        
-    //       if ($request['amount'] <= 0 || $check_amount->user_amount < $request['amount']) {
-    //     return response()->json(['message' => 'Invalid or Insufficient Balance', 'status' => 'error']);
-    //     }
+          if ($request['amount'] <= 0 || $check_amount->user_amount < $request['amount']) {
+        return response()->json(['message' => 'Invalid or Insufficient Balance', 'status' => 'error']);
+        }
         
-    //      else{
-    //       $new_amount = $check_amount->user_amount - $request['amount'];
-    //       $check_amount->update(['user_amount' => $new_amount]);
-    //    }
+         else{
+          $new_amount = $check_amount->user_amount - $request['amount'];
+          $check_amount->update(['user_amount' => $new_amount]);
+       }
 
 
-    //     $url="https://uzobestgsm.com/api/data/";
-    //     $headers = [
-    //         'Authorization' => "Token ".env('UZOBEST_KEY'),
-    //         "accept" => "application/json",
-    //     ];
+        $url="https://uzobestgsm.com/api/data/";
+        $headers = [
+            'Authorization' => "Token ".env('UZOBEST_KEY'),
+            "accept" => "application/json",
+        ];
 
 
-    //     $requestDataCall = Http::withHeaders($headers)->post($url,[
-    //         "network" => $request->input('network'),
-    //         "mobile_number" => $request->input('ref_num_purchase'),
-    //         "plan" => $request->input('plan'),
-    //         "Ported_number" =>  "true",
-    //     ]);
-    //     Log::info('reference', ['plan' => $request->input('plan'), 'network' => $request->input('network')]);
-    //      DB::commit();
-    //     try{
+        $requestDataCall = Http::withHeaders($headers)->post($url,[
+            "network" => $request->input('network'),
+            "mobile_number" => $request->input('ref_num_purchase'),
+            "plan" => $request->input('plan'),
+            "Ported_number" =>  "true",
+        ]);
+        Log::info('reference', ['plan' => $request->input('plan'), 'network' => $request->input('network')]);
+         DB::commit();
+        try{
 
-    //         $dusername = $request->input('username');
-    //         $damount = $request->input('amount');
-    //         $dtypeofpurchase = $request->input('type_of_purchase');
-    //         $dsubtypepurchase = $request->input('sub_type_purchase');
-    //         $ddatatype = $request->input('data_type');
-    //         $dstatus = $request->input('status');
-    //         $drefnumpurchase = $request->input('ref_num_purchase');
-    //         $dreference = $request->input('reference');
-    //         $ddateofpurchase = $request->input('date_of_purchase');
+            $dusername = $request->input('username');
+            $damount = $request->input('amount');
+            $dtypeofpurchase = $request->input('type_of_purchase');
+            $dsubtypepurchase = $request->input('sub_type_purchase');
+            $ddatatype = $request->input('data_type');
+            $dstatus = $request->input('status');
+            $drefnumpurchase = $request->input('ref_num_purchase');
+            $dreference = $request->input('reference');
+            $ddateofpurchase = $request->input('date_of_purchase');
 
-    //     if($requestDataCall->successful()){
+        if($requestDataCall->successful()){
 
-    //         $requestdata = $requestDataCall->getbody();
-    //         $messagedecode = json_decode($requestdata);
-    //         $status =  $messagedecode->Status;
-    //         $uzoreference = $messagedecode->ident;
-    //         $transaction_data = new Transactions();
-    //         $transaction_data->username = $dusername;
-    //         $transaction_data->amount = $damount;
-    //         $transaction_data->type_of_purchase = $dtypeofpurchase;
-    //         $transaction_data->sub_type_purchase = $dsubtypepurchase;
-    //         $transaction_data->data_type = $ddatatype;
-    //         $transaction_data->status = $dstatus;
-    //         $transaction_data->ref_num_purchase = $drefnumpurchase;
-    //         $transaction_data->reference = $dreference;
-    //         $transaction_data->date_of_purchase = $ddateofpurchase;
-    //         $transaction_data->save();
+            $requestdata = $requestDataCall->getbody();
+            $messagedecode = json_decode($requestdata);
+            $status =  $messagedecode->Status;
+            $uzoreference = $messagedecode->ident;
+            $transaction_data = new Transactions();
+            $transaction_data->username = $dusername;
+            $transaction_data->amount = $damount;
+            $transaction_data->type_of_purchase = $dtypeofpurchase;
+            $transaction_data->sub_type_purchase = $dsubtypepurchase;
+            $transaction_data->data_type = $ddatatype;
+            $transaction_data->status = $dstatus;
+            $transaction_data->ref_num_purchase = $drefnumpurchase;
+            $transaction_data->reference = $dreference;
+            $transaction_data->date_of_purchase = $ddateofpurchase;
+            $transaction_data->save();
 
-    //         Log::info('datapurchase Line for successful page', ['reference' =>  $uzoreference]);
+            Log::info('datapurchase Line for successful page', ['reference' =>  $uzoreference]);
 
-    //         if($transaction_data){
-    //             return response()->json(['message' => $status, 'status' => 'success']);
-    //         }
+            if($transaction_data){
+                return response()->json(['message' => $status, 'status' => 'success']);
+            }
             
-    //     }
+        }
         
-    //     else{  
-    //         if($requestDataCall->getStatusCode() == "400"){
-    //                 $return_amount = UserAccountDetails::where('username', $request['username'])->first();
-    //               if($return_amount){
-    //                   $initial_amount = $return_amount->user_amount;
-    //                   $totalremainingsum = $initial_amount + $request->input('amount');
-    //                   $return_amount->update(['user_amount' =>$totalremainingsum]);
-    //               }
-    //             return response()->json(['message' => 'Current Package not available', 'status' => 'error']);
+        else{  
+            if($requestDataCall->getStatusCode() == "400"){
+                    $return_amount = UserAccountDetails::where('username', $request['username'])->first();
+                  if($return_amount){
+                      $initial_amount = $return_amount->user_amount;
+                      $totalremainingsum = $initial_amount + $request->input('amount');
+                      $return_amount->update(['user_amount' =>$totalremainingsum]);
+                  }
+                return response()->json(['message' => 'Current Package not available', 'status' => 'error']);
                 
               
-    //         }
+            }
             
-    //      return response()->json(['message' => 'not successful', 'status' => 'false', 'code' => $requestDataCall->body()]);
-    //     }
-    //     // DB::commit();
-    // }catch(\Exception $e){
-    //     // DB::rollBack();
-    //     return response()->json(['message' => 'Oops something went wrong, try again later','status' =>'error', 'log' => $e->getMessage()]);
-    // }
+         return response()->json(['message' => 'not successful', 'status' => 'false', 'code' => $requestDataCall->body()]);
+        }
+        // DB::commit();
+    }catch(\Exception $e){
+        // DB::rollBack();
+        return response()->json(['message' => 'Oops something went wrong, try again later','status' =>'error', 'log' => $e->getMessage()]);
+    }
         
-    // }
+    }
 
     public function CablePurchase(Request $request){
         $request->validate([
