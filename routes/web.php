@@ -39,11 +39,11 @@ Route::get( '/mealxpress_drinks/{filename}', action: function($filename){
 Route::get('/test', function(){
    $title = "TGIF"; 
     $body = "I have a dream that one day all things will be alright";
-    $token = 'csavHiPnToK3971OUno1K_:APA91bFZ7_DHpb4lFfJf48gaJ4LOYJbAs7y80uYAgEX7b68OurF0F3R9Uu2y8TgACOwFkMVXdP231epiGZGr1dXB3iA0bRW1hwakevQxlQERqqvS8i6uiYM';
+    $token = "dMWOwjk-TsKnPbHedK_Fnq:APA91bG5mdH-P0eKcM5ZvEzSuSQ8kcT2oTOFCQg306rbBTCjhhDePnkWwUJHZzd9r6mKD3InjMPYsxFTGaxbqP-Kiu2rRC8FQY3W8HrSo2CdIzUeZplF9O8";
     $body ="We are here to gain momentum";
     $messaging = app('firebase.messaging');
 
-    $message = CloudMessage::withTarget('token', $token)
+    $message = CloudMessage::withTarget('all_users', $token)
     ->withNotification(notification: Notification::create($title, $body));
     try {
         $response = $messaging->send($message);

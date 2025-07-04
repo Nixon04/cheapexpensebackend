@@ -6,6 +6,15 @@ import {Link} from '@inertiajs/inertia-vue3';
 import PrimeVue from 'primevue/config';
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
+import './assetsmain/mealxpresscustom/front.css';
+import './assetsmain/mealxpresscustom/frontmedia.css';
+
+
+import { createPinia } from 'pinia';
+
+
+const pinia = createPinia();
+
 createInertiaApp({
   resolve: name => {
     const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
@@ -22,6 +31,7 @@ createInertiaApp({
    app.component('Link', Link);
       app.use(plugin)
       .use(Toast)
+      .use(pinia)
       .use(PrimeVue)
       .mount(el)
   },

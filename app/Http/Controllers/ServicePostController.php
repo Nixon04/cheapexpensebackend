@@ -26,6 +26,10 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Http\Client\ConnectionException;
 
+
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+
 class ServicePostController extends Controller
 {
 
@@ -117,7 +121,7 @@ class ServicePostController extends Controller
         ]);
        }
 
-    }catch(\Illuminate\Http\Client\ConnectionException $e){
+    }catch(ConnectionException $e){
         return response()->json(['message' => 'Connection Error', 'status' => 'error']);
     }
     catch(\Exception $e){
@@ -178,7 +182,7 @@ class ServicePostController extends Controller
             }
         }
     }
-    catch(\Illuminate\Http\Client\ConnectionException $e){
+    catch(ConnectionException $e){
         DB::rollBack();
         return response()->json(['message' =>  'Connection Error', 'status' => 'error']);
     }
@@ -268,7 +272,7 @@ class ServicePostController extends Controller
              }
            }
         }
-        catch(\Illuminate\Http\Client\ConnectionException $e){
+        catch(ConnectionException $e){
             DB::rollBack();
             return response()->json(['message' =>  'Connection Error', 'status' => 'error']);
         }
@@ -349,7 +353,7 @@ class ServicePostController extends Controller
                 DB::rollBack();
                 return response()->json(['message' => 'Funding failed. Try again.', 'status' => 'error']);
             }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        } catch (ConnectionException $e) {
             DB::rollBack();
             return response()->json(['message' => 'Network Connection issue', 'status' => 'error']);
         } catch (\Exception $e) {
@@ -513,7 +517,7 @@ class ServicePostController extends Controller
             return response()->json(['message' => 'Was not successful', 'status' => 'error']);
         }
     }
-    catch(\Illuminate\Http\Client\ConnectionException $e){
+    catch(ConnectionException $e){
         return response()->json([
             'message' => 'Connection Error',
             'status' => 'error', 
@@ -568,7 +572,7 @@ class ServicePostController extends Controller
                 Log::info('card declined on', ['error' => $response->body()]);
                 return response()->json(['message' => 'API call was not successful', 'status' => 'error']);
             }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        } catch (ConnectionException $e) {
             DB::rollBack();
             return response()->json(['message' => 'Network connection issue', 'status' => 'error']);
         } catch (\Exception $e) {
@@ -1341,7 +1345,7 @@ public function fetchCableSubscription(Request $request){
         "userpin" => 'required',
         "date_of_purchase" => 'required',
         "data_type" => 'required',
-        "reference" => 'required|unique:transactions,reference',
+        "reference" => 'required',
     ]);  
 
     try {
@@ -1381,9 +1385,10 @@ public function fetchCableSubscription(Request $request){
                 'serviceID' => $request->input('sub_type_purchase'),
                 'amount' => $request->input('amount'),
                 'phone' => $request->input('ref_num_purchase'),
+                
             ]);
 
-            Log::info('Airtime Payloads', ['status' =>  $generated_reference,
+            Log::info('Airtime Payloads', ['status' =>  $request,
              ]);
 
             if ($response->successful() && $response) {
@@ -1402,12 +1407,24 @@ public function fetchCableSubscription(Request $request){
                  $transaction_data->date_of_purchase = $request->input('date_of_purchase');
                  $transaction_data->save();
                   DB::commit();
+
+                  $token = $password_pin_check->fcmtoken;
+
+                  $title = "Airtime Package";
+                  $body = "Sum of" .number_format($request->input('amount'), 2). "was successful.";
+                  $messaging = app('firebase.messaging');
+                  $message = CloudMessage::withTarget('token', $token)
+                   ->withNotification(notification: Notification::create($title, $body));
+
+                   Log::info('AirtimeLogToken', ['status'=> $message]);
+
+
                 return response()->json(['message' => 'success', 'status' => 'success']);
             } else {
                 DB::rollBack();
                 $status_log = $response->getBody();
                 Log::info('AirtimeLog', ['status' => $status_log]);
-                return response()->json(['message' => $response->body(), 'status' => 'error']);
+                return response()->json(['message' => 'Airtime subscription failed', 'status' => 'error']);
             }
         }
         catch(ConnectionException $e){
@@ -1494,6 +1511,7 @@ public function NewDataPurchase(Request $request){
         $reference_state = $messagedecode->message->details->trans_id;
     
         Log::info('datapurchase Line for successful page', ['reference' =>  $requestdata]);
+
        if($status ==  true){
         $transaction_data = new Transactions();
         $transaction_data->username = $dusername;
@@ -1508,6 +1526,13 @@ public function NewDataPurchase(Request $request){
         $transaction_data->save();
 
         if($transaction_data){
+            $token = $password_pin_check->fcmtoken;
+            $title = "Data Package";
+            $body = "Sum of" .number_format($request->input('amount'), 2). "data worth has been purchased";
+            $messaging = app('firebase.messaging');
+            $message = CloudMessage::withTarget('token', $token)
+             ->withNotification(notification: Notification::create($title, $body));
+
             return response()->json(['message' => $status, 'status' => 'success']);
         }
         
@@ -1515,11 +1540,13 @@ public function NewDataPurchase(Request $request){
         $check_amount->increment('user_amount', $request['amount']);
         return response()->json(['message' => 'Error Couldn\'t fully transact, amount refunded back', 'status' => 'error']);
        }
-    }else{
+    }
+    else{
         $check_amount->increment('user_amount', $request['amount']);
         $requestdata = $requestDataCall->body();
         Log::info('Not successful', ['reference' =>  $requestdata]);
 
+        return response()->json(['message' => 'Error Couldn\'t fully transact, amount refunded back', 'status' => 'error']);
     }
   
 }

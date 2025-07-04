@@ -1,0 +1,7 @@
+@media(max-width:991px){
+
+.front-header-content, .front-hero-content, .front-hero-content-about{
+    width: 95%;
+ }
+ 
+}

@@ -31,7 +31,7 @@ class PostController extends Controller
         // Initialize the Firebase Messaging service
         $messaging = app('firebase.messaging');
         // Create the notification message
-        $message = CloudMessage::withTarget('token', "d1mBwzByT1K8OZ4FWoCufL:APA91bHg5305IpC6GQdsHfFAucnwZweIGsp31rCjstinbRY5dABkp1bzYeHF-ph_NSELY0q9rpW8du9JR4BvMiSXJgUhxkXJ9UwxJBAImSrFzO4g-NY1Y5Q")
+        $message = CloudMessage::withTarget('topic', "all_users")
             ->withNotification(notification: Notification::create($request->title ?? 'Title body', $body ?? 'Message body'));
         // Send the message
         try {

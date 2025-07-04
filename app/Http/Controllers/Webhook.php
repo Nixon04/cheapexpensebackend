@@ -39,8 +39,8 @@ class Webhook extends Controller
         // Get Paystack signature header
         $paystackSignature = $request->header('x-paystack-signature');
 
-        define('SECOND_SECRET_KEY', env('SECOND_SECRET_KEY'));
-        if ($paystackSignature !== hash_hmac('sha512', $paymentDetails, SECOND_SECRET_KEY)) {
+        define('PAYSTACK_SECRET_KEY', env('PAYSTACK_SECRET_KEY'));
+        if ($paystackSignature !== hash_hmac('sha512', $paymentDetails, PAYSTACK_SECRET_KEY)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 400);
         }
 
@@ -235,8 +235,10 @@ class Webhook extends Controller
         $headers = $request->headers->all();
         $stats  = json_decode($body);
 
+        Log::info('Log for Payscribe', ['status' =>  $body]);
+
         if($stats->event_type == "bills.created"){
-            $reference_state = $stats->trans_id;
+            $reference_state = $stats->ref;
             $status = $stats->transaction_status;
             $querycheck = Transactions::where('reference',  $reference_state)->first();
             if($querycheck){
@@ -251,6 +253,7 @@ class Webhook extends Controller
                 'message' => 'Failed, couldn\'t process through',
             ]);
         }
+       
 
        if($stats->event_type == "issuing.created.successful"){
         try{
