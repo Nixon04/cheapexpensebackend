@@ -22,11 +22,11 @@
             <span class="fs-3 fw-bold text-dark">Cheapexpense</span>
           </div>
 
-          <div class="">
+          <!-- <div class="">
             <Link href="" class="button-actions">
               <span>Download our App</span>
             </Link>
-          </div>
+          </div> -->
       </div>
     </div>
 
