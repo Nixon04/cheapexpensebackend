@@ -107,10 +107,9 @@ Route::prefix('')->group(callback: function(){
     Route::post('withdrawcard', 'WithdrawCard');
     Route::post('terminatecard', 'TerminateCard');
     Route::post('fetchcardtransactions', 'CardTransactionsList');
-
+    Route::post('fillcheck', 'Fillcheck');
     Route::post('createsavings', 'CreateSavings');
 
-    
    });
 });
 

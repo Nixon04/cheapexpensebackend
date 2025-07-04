@@ -79,117 +79,118 @@ private function applyMarkup($amount){
 }
 
 
-    // public function UpdateDataPackages(Request $request)
-    // {
-    //     $request->validate([
-    //         'type' => 'required', 
-    //     ]);
-    
-    //     try {
-    //         $networks = ['mtn', 'airtel', 'glo', '9mobile']; 
-    //         $all_plans = [];
-    
-    //         foreach ($networks as $network) {
-    //             $url = "https://api.payscribe.ng/api/v1/data/lookup?network={$network}";
-    //             $headers = [
-    //                 'Authorization' => 'Bearer ' . env('PAYSCRIBE_PUBLIC_KEY'),
-    //                 'Content-Type' => 'application/json',
-    //                 // 'User-Agent' => 'Mozilla/5.0 (compatible; MyLaravelApp/1.0)'
-    //             ];
+public function UpdateUzoBestPackage(Request $request)
+{
+    $url = "https://uzobestgsm.com/api/network/";
+    $headers = [
+        'Authorization' => "Token " . env('UZOBEST_KEY'),
+        "accept" => "application/json",
+    ];
 
-    //             $requestProcess = Http::withHeaders($headers)
-    //             ->get($url);
+    try {
+        $response = Http::withHeaders($headers)->get($url);
 
-    //             if ($requestProcess->successful()) {
-    //                 $json_data = json_decode($requestProcess->body());
-    
-    //                 if ($json_data && isset($json_data->message->details)) {
-    //                     $plans_init = $json_data->message->details;
-    
-    //                     foreach ($plans_init as $entry) {
-    //                         $networkid = $entry->network_name;
-    //                         Log::info('Network Id', ['info' => $networkid]);
-    
-    //                         $existingPlans = DataPackList::where('network', $networkid)->get()->keyBy('plan_code');
-    //                         $apiPlanCodes = [];
-    //                         $bulkInsert = [];   
-    
-    //                         foreach ($entry->plans as $plan) {
-    //                             $originalAmount = floatval($plan->amount);
-    //                             $adjustedAmount = $this->applyMarkup($originalAmount);
+        if (!$response->successful()) {
+            Log::error("Failed to fetch UzoBest plans");
+            return response()->json(['message' => 'Failed to fetch plans', 'status' => 'error'], 500);
+        }
 
-    //                             $durationType = $this->detectDurationType( $plan->name);
-    //                             $apiPlanCodes[] = $plan->plan_code;
-    
-    //                             if ($existingPlans->has($plan->plan_code)) {
-    //                                 $existingPlan = $existingPlans[$plan->plan_code];
-    //                                 if (
-    //                                     $existingPlan->name !== $plan->name ||
-    //                                     $existingPlan->alias !== $plan->alias ||
-    //                                     $existingPlan->amount != $plan->amount ||
-    //                                     $existingPlan->network != $networkid
-    //                                     || $existingPlan->duration_type !== $durationType
-    //                                     || $existingPlan->current_amount !== $adjustedAmount
-    //                                 ) {
-    //                                     $existingPlan->update([
-    //                                         'name' => $plan->name,
-    //                                         'alias' => $plan->alias,
-    //                                         'amount' => $plan->amount,
-    //                                         'network' => $networkid,
-    //                                         'current_amount' => $adjustedAmount,
-    //                                         'duration_type' => $durationType ??  'Duration',
-    //                                     ]);
-    //                                 }
-    //                             } else {
-    //                                 $bulkInsert[] = [
-    //                                     'network' => $networkid,
-    //                                     'plan_code' => $plan->plan_code,
-    //                                     'name' => $plan->name,
-    //                                     'alias' => $plan->alias,
-    //                                     'amount' => $plan->amount,
-    //                                     'current_amount' => $adjustedAmount,
-    //                                     'duration_type' => $durationType ?? 'Duration',
-    //                                     'created_at' => now(),
-    //                                     'updated_at' => now()
-    //                                 ];
-    //                             }
-    
-    //                             // Optional: add to output array
-    //                             $all_plans[] = [
-    //                                 'network' => $networkid,
-    //                                 'plan_code' => $plan->plan_code,
-    //                                 'name' => $plan->name,
-    //                                 'alias' => $plan->alias,
-    //                                 'amount' => $plan->amount,
-    //                                 'current_amount' => $adjustedAmount,
-    //                                 'durationType' => $durationType ??  'Duration',
-    //                             ];
-    //                         }
-    
-    //                         if (!empty($bulkInsert)) {
-    //                             DataPackList::insert($bulkInsert);
-    //                         }
-    
-    //                         DataPackList::where('network', $networkid)
-    //                             ->whereNotIn('plan_code', $apiPlanCodes)
-    //                             ->delete();
-    //                     }
-    //                 } else {
-    //                     Log::warning("No valid details returned for network: {$network}");
-    //                 }
-    //             } else {
-    //                 Log::error("Failed to fetch plans for network: {$network}");
-    //                 // continue;
-    //             }
-    //         }
-    
-    //         return response()->json(['details' => $all_plans, 'status' => 'success']);
-    
-    //     } catch (\Exception $e) {
-    //         Log::error('UpdateDataPackages Exception', ['error' => $e->getMessage()]);
-    //         return response()->json(['message' => 'An error occurred', 'status' => 'error'], 500);
-    //     }
-    // }
+        $data = $response->json();
+
+        $all_plans = [];
+
+        // Example networks - adjust keys based on actual API response
+        $networkKeys = ['MTN_PLAN', 'AIRTEL_PLAN', 'GLO_PLAN', '9MOBILE_PLAN'];
+
+        foreach ($networkKeys as $networkKey) {
+            if (!isset($data[$networkKey])) {
+                Log::warning("No data for network key: {$networkKey}");
+                continue;
+            }
+
+            $plans = $data[$networkKey];
+            $apiPlanIds = [];
+            $bulkInsert = [];
+
+            // Extract network name from key, e.g. 'MTN_PLAN' => 'MTN'
+            $networkName = str_replace('_PLAN', '', $networkKey);
+
+            // Get existing plans for this network
+            $existingPlans = DataPackList::where('network', $networkName)->get()->keyBy('plan_code');
+
+            foreach ($plans as $plan) {
+                $planCode = $plan['dataplan_id'];
+                $planName = $plan['plan'] ?? '';
+                $planAlias = $plan['plan_type'] ?? '';
+                $originalAmount = floatval($plan['plan_amount']);
+                $adjustedAmount = $this->applyMarkup($originalAmount);
+                $durationType = $plan['month_validate'] ?? 'Duration';
+
+                $apiPlanIds[] = $planCode;
+
+                if ($existingPlans->has($planCode)) {
+                    $existingPlan = $existingPlans[$planCode];
+
+                    if (
+                        $existingPlan->name !== $planName ||
+                        $existingPlan->alias !== $planAlias ||
+                        $existingPlan->amount != $originalAmount ||
+                        $existingPlan->network !== $networkName ||
+                        $existingPlan->current_amount !== $adjustedAmount ||
+                        $existingPlan->duration_type !== $durationType
+                    ) {
+                        $existingPlan->update([
+                            'name' => $planName,
+                            'alias' => $planAlias,
+                            'amount' => $originalAmount,
+                            'network' => $networkName,
+                            'current_amount' => $adjustedAmount,
+                            'duration_type' => $durationType,
+                        ]);
+                    }
+                } else {
+                    $bulkInsert[] = [
+                        'network' => $networkName,
+                        'plan_code' => $planCode,
+                        'name' => $planName,
+                        'alias' => $planAlias,
+                        'amount' => $originalAmount,
+                        'current_amount' => $adjustedAmount,
+                        'duration_type' => $durationType,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                $all_plans[] = [
+                    'network' => $networkName,
+                    'plan_code' => $planCode,
+                    'name' => $planName,
+                    'alias' => $planAlias,
+                    'amount' => $originalAmount,
+                    'current_amount' => $adjustedAmount,
+                    'duration_type' => $durationType,
+                ];
+            }
+
+            if (!empty($bulkInsert)) {
+                DataPackList::insert($bulkInsert);
+            }
+
+            // Delete plans that no longer exist in the API response for this network
+            DataPackList::where('network', $networkName)
+                ->whereNotIn('plan_code', $apiPlanIds)
+                ->delete();
+        }
+
+        return response()->json(['details' => $all_plans, 'status' => 'success']);
+
+    } catch (\Exception $e) {
+        Log::error('UpdateUzoBestPackage Exception', ['error' => $e->getMessage()]);
+        return response()->json(['message' => 'An error occurred', 'status' => 'error'], 500);
+    }
+}
+
     
 
 

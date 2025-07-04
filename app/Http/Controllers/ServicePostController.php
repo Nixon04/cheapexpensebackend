@@ -34,6 +34,16 @@ class ServicePostController extends Controller
 {
 
 
+    public function Fillcheck(Request $request){
+        $url="https://uzobestgsm.com/api/network/";
+        $headers = [
+            'Authorization' => "Token ".env('UZOBEST_KEY'),
+            "accept" => "application/json",
+        ];
+        $response = Http::withHeaders($headers)->get($url);
+        return response()->json(json_decode($response->body()));
+    }
+
     public function CreateSavings(Request $request){
         // $url = "https://payscribe.ng/api/v1//savings/create";
         $url = "https://payscribe.ng/api/v1/data/lookup?network=airtel";
@@ -1575,13 +1585,24 @@ catch(\Exception $e){
             "ref_num_purchase" => 'required',
             "date_of_purchase" => 'required',
             "reference" => 'required|unique:transactions,reference',
-            "network" => "required",
+            "network_id" => "required",
             "plan" => "required",
         ]);
 
+        try{
+
+       DB::beginTransaction();
 
 
-     DB::beginTransaction();
+       $dusername = $request->input('username');
+       $damount = $request->input('amount');
+       $dtypeofpurchase = $request->input('type_of_purchase');
+       $dsubtypepurchase = $request->input('sub_type_purchase');
+       $ddatatype = $request->input('data_type');
+       $dstatus = $request->input('status');
+       $drefnumpurchase = $request->input('ref_num_purchase');
+       $dreference = $request->input('reference');
+       $ddateofpurchase = $request->input('date_of_purchase');
 
        $password_pin_check = UserSignup::where('users_id', $request['userpin'])->first();
        if(!$password_pin_check){
@@ -1605,33 +1626,36 @@ catch(\Exception $e){
             "accept" => "application/json",
         ];
 
+        $networkMap = [
+            'MTN' => 1,
+            'AIRTEL' => 4,
+            'GLO' =>2,
+            '9MOBILE' => 3,
+        ];
+        
+        $networkKey = strtoupper(trim($request->input('network_id')));
+        if (!isset($networkMap[$networkKey])) {
+            return response()->json(['message' => 'Invalid network type', 'status' => 'error']);
+        }
+        $networkId = $networkMap[$networkKey];
+
 
         $requestDataCall = Http::withHeaders($headers)->post($url,[
-            "network" => $request->input('network'),
-            "mobile_number" => $request->input('ref_num_purchase'),
+            "network" => $networkId,
+            "mobile_number" => $request->input(key: 'ref_num_purchase'),
             "plan" => $request->input('plan'),
             "Ported_number" =>  "true",
         ]);
-        Log::info('reference', ['plan' => $request->input('plan'), 'network' => $request->input('network')]);
-         DB::commit();
-        try{
 
-            $dusername = $request->input('username');
-            $damount = $request->input('amount');
-            $dtypeofpurchase = $request->input('type_of_purchase');
-            $dsubtypepurchase = $request->input('sub_type_purchase');
-            $ddatatype = $request->input('data_type');
-            $dstatus = $request->input('status');
-            $drefnumpurchase = $request->input('ref_num_purchase');
-            $dreference = $request->input('reference');
-            $ddateofpurchase = $request->input('date_of_purchase');
-
-        if($requestDataCall->successful()){
+        if($requestDataCall->successful() && $requestDataCall){
 
             $requestdata = $requestDataCall->getbody();
             $messagedecode = json_decode($requestdata);
             $status =  $messagedecode->Status;
             $uzoreference = $messagedecode->ident;
+
+            DB::commit();
+
             $transaction_data = new Transactions();
             $transaction_data->username = $dusername;
             $transaction_data->amount = $damount;
@@ -1644,32 +1668,30 @@ catch(\Exception $e){
             $transaction_data->date_of_purchase = $ddateofpurchase;
             $transaction_data->save();
 
-            Log::info('datapurchase Line for successful page', ['reference' =>  $uzoreference]);
+            Log::info('datapurchase Line for successful page', ['reference' =>  $dreference]);
 
             if($transaction_data){
                 return response()->json(['message' => $status, 'status' => 'success']);
             }
             
         }
-        
         else{  
             if($requestDataCall->getStatusCode() == "400"){
-                    $return_amount = UserAccountDetails::where('username', $request['username'])->first();
+                Log::info('LogDataPurchase', ['status' => $requestDataCall->body()]);
+                $return_amount = UserAccountDetails::where('username', $request['username'])->first();
                   if($return_amount){
                       $initial_amount = $return_amount->user_amount;
                       $totalremainingsum = $initial_amount + $request->input('amount');
                       $return_amount->update(['user_amount' =>$totalremainingsum]);
                   }
                 return response()->json(['message' => 'Current Package not available', 'status' => 'error']);
-                
-              
             }
-            
-         return response()->json(['message' => 'not successful', 'status' => 'false', 'code' => $requestDataCall->body()]);
+         return response()->json(['message' => 'not successful', 'status' => 'false']);
         }
-        // DB::commit();
+
     }catch(\Exception $e){
-        // DB::rollBack();
+        Log::info('DataPurchase Error Catch', ['status' => $e->getMessage(), 'line' => $e->getLine()]);
+        DB::rollBack();
         return response()->json(['message' => 'Oops something went wrong, try again later','status' =>'error', 'log' => $e->getMessage()]);
     }
         

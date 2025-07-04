@@ -7,7 +7,7 @@
         <NavbarComponent />
         <div class="mealxpress-content">
           <HeaderDashboard/>
-          <div class="mealxpress-mai p-1">
+          <div class="mealxpress-main mb-5 p-1">
             <div class="card-general-container card p-2">
                 <div class="card">
                     <h5 class="card-header">
@@ -159,7 +159,7 @@
       const payload = {
         'type': 'all',
       };
-      const response = await axios.post('/updatedatapackages', payload, {
+      const response = await axios.post('/updateuzopackage', payload, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -8,9 +8,11 @@
         <div class="mealxpress-content">
           <HeaderDashboard/>
           <div class="mealxpress-main">
-            <div class="card-general-container card p-2">
-                <div class="card">
-                    <h5 class="card-header"></h5>
+            <div class="">
+                <div class="car">
+                    <h5 class="card-heade mb-5 fw-bold">
+                      Cable Subscription Package
+                    </h5>
                     <div class="d-flex justify-content-between px-6 me-3 ms-3">
                         <div class="d-flex">
                             <div class="form-input">

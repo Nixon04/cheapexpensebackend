@@ -1,6 +1,6 @@
 <template>
   <div>
-    <canvas id="barChart" data-height="400" class="chartjs"></canvas>
+    <canvas id="barChart" data-height="1000" class="chartjs"></canvas>
   </div>
 </template>
 
@@ -141,7 +141,7 @@ export default {
 <style scoped>
 .chartjs {
   width: 100%;
-  height: 250px;
+  height: 350px;
   margin: 0 auto;
 }
 </style>

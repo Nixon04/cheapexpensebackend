@@ -17,72 +17,97 @@ use Inertia\Inertia;
 class AuthController extends Controller
 {
     //
-
-    public function FetchRecord(){
-      $monthlyData = DB::table('transactions')
-    ->selectRaw('MONTHNAME(created_at) as month, SUM(amount) as total')
-    ->groupByRaw('MONTHNAME(created_at), MONTH(created_at)')
-    ->orderByRaw('MONTH(created_at)')
-    ->get();
-
-    // Ensure all months are present with zero values if no data exists
-    $months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    $formattedData = array_map(function ($month) use ($monthlyData) {
-        $data = $monthlyData->firstWhere('month', $month);
-        return [
-            'month' => $month,
-            'total' => $data->total ?? 0
-        ];
-    }, $months);
-     return response()->json(['returns' => $formattedData]);
+    public function FetchRecord() {
+        $currentYear = now()->year;
+        $currentMonth = now()->month;
+    
+        // Get monthly data only for the current year
+        $monthlyData = DB::table('transactions')
+            ->selectRaw('MONTH(created_at) as month_num, SUM(amount) as total')
+            ->whereYear('created_at', $currentYear)
+            ->groupByRaw('MONTH(created_at)')
+            ->orderByRaw('MONTH(created_at)')
+            ->get();
+    
+        // Prepare an array of months up to the current month
+        $months = [];
+        for ($i = 1; $i <= $currentMonth; $i++) {
+            $months[$i] = date('F', mktime(0, 0, 0, $i, 10));
+        }
+    
+        // Format the data with zero fallback
+        $formattedData = [];
+        foreach ($months as $num => $name) {
+            $data = $monthlyData->firstWhere('month_num', $num);
+            $formattedData[] = [
+                'month' => $name,
+                'total' => $data->total ?? 0
+            ];
+        }
+    
+        return response()->json(['returns' => $formattedData]);
     }
+    
     public function LoginPage(){
         
       return Inertia::render('cheapx/auth/login');
     }
- public function HomeDashboard(){
-    if(!Session::get('userid')){
-        return Inertia::render('cheapx/auth/login');
-       }
-       $populate = Transactions::orderBy('id','DESC')->take(4)->get(); 
-       $total = Transactions::sum('amount');
-       $count = Transactions::count('id');
+    public function HomeDashboard() {
+        if (!Session::get('userid')) {
+            return Inertia::render('cheapx/auth/login');
+        }
+    
+        $today = now()->toDateString();
+        $currentYear = now()->year;
+    
+        // Get the latest 4 transactions
+        $populate = Transactions::orderByDesc('id')->take(4)->get(); 
+    
+        // Get total amount and number of all transactions
+        $total = Transactions::sum('amount');
+        $count = Transactions::count('id');
+    
+        // Get monthly aggregated data for the current year
+        $monthlyData = DB::table('transactions')
+            ->selectRaw('MONTH(created_at) as month_num, MONTHNAME(created_at) as month_name, SUM(amount) as total')
+            ->whereYear('created_at', $currentYear)
+            ->groupByRaw('MONTH(created_at), MONTHNAME(created_at)')
+            ->orderByRaw('MONTH(created_at)')
+            ->get();
+    
+        // Prepare months (Jan to Dec) and map data accordingly
+        $currentMonth = now()->month;
 
+        $months = [];
+        for ($i = 1; $i <= $currentMonth; $i++) {
+            $months[$i] = date('F', mktime(0, 0, 0, $i, 10));
+        }
+    
+        $formattedData = [];
+        foreach ($months as $num => $name) {
+            $data = $monthlyData->firstWhere('month_num', $num);
+            $formattedData[] = [
+                'month' => $name,
+                'total' => $data->total ?? 0
+            ];
+        }
+    
+        // Get today's transactions
+        $todaysTransactions = Transactions::whereDate('created_at', $today)->get();
+        $todaysCount = $todaysTransactions->count();
 
-   //  calculating for via monthly changes
-
-   // $monthlyData = DB::table('transactions')
-   //      ->selectRaw('MONTHNAME(created_at) as month, SUM(amount) as total')
-   //      ->groupByRaw('MONTH(created_at)')
-   //      ->orderByRaw('MONTH(created_at)')
-   //      ->get();
-
-   $monthlyData = DB::table('transactions')
-    ->selectRaw('MONTHNAME(created_at) as month, SUM(amount) as total')
-    ->groupByRaw('MONTHNAME(created_at), MONTH(created_at)')
-    ->orderByRaw('MONTH(created_at)')
-    ->get();
-
-    // Ensure all months are present with zero values if no data exists
-    $months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    $formattedData = array_map(function ($month) use ($monthlyData) {
-        $data = $monthlyData->firstWhere('month', $month);
-        return [
-            'month' => $month,
-            'total' => $data->total ?? 0
-        ];
-    }, $months);
-
-    return Inertia::render('cheapx/dashboard/home', ['data' => $populate, 'total' => $total, 'count' => $count, 'returns' => $formattedData]);
- }
+    
+        return Inertia::render('cheapx/dashboard/home', [
+            'data' => $populate,
+            'total' => $total,
+            'count' => $count,
+            'returns' => $formattedData, // This will only contain current year data
+            'todaysTransactions' => $todaysTransactions,
+            'todaysCount' => $todaysCount
+        ]);
+    }
+    
+    
 
  public function RegUsers(){
     if(!Session::get('userid')){

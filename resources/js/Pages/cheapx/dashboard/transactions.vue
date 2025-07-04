@@ -6,11 +6,13 @@
         <NavbarComponent />
         <div class="mealxpress-content">
           <HeaderDashboard/>
-          <div class="mealxpress-main">
-            <div class="card-general-container card p-2">
-                <div class="card">
-                    <h5 class="card-header"></h5>
-                    <div class="d-flex justify-content-between px-6 me-3 ms-3">
+          <div class="mealxpress-main p-2">
+            <div class="card-general-containe p-2">
+                <div class="car">
+                    <h5 class="card-header mb-3">
+                      Transactions
+                    </h5>
+                    <div class="d-flex justify-content-between me-3 ms-3">
                         <div class="d-flex">
                             <div class="form-input">
                                 <input type="text" class="form-control py-2" v-model="searchQuery"  placeholder="Search...">
@@ -22,12 +24,9 @@
                                     <option v-for="option in dropOption" :key="option" :value="option">{{ option }}</option>
                                 </select>
                             </div>
-                            <!-- <div class="meal-form-button">
-                                <button @click="ShowCenterModel(item)" class="togglebutton btn bg-button-submit py-3 text-sm">Add Users</button>
-                            </div> -->
                         </div>
                     </div>
-                    <div class="card-body">
+                    <div class="">
                     <div class="table-responsive text-nowrap">
                       <table class="table">
                        <thead>
@@ -60,8 +59,7 @@
                             <td><span class="badge bg-label-info me-1">{{item.status}}</span></td>
                             <td> {{item.ref_num_purchase}}</td>
                             <td><span class="badge bg-label-info me-1">{{item.reference}}</span></td>
-                            <td>{{date_of_purchase}}</td>
-                            <td> {{item.created_at}}</td>
+                            <td>{{item.date_of_purchase}}</td>
                             <td>
                       
                     </td>

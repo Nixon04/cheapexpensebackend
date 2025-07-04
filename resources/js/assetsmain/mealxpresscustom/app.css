@@ -22,9 +22,13 @@
     font-family: 'DM Sans', sans-serif!important;
 }
 
+html, body{
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 .bg-b{
     background: #000;
-
 }
 body{
     background: #fff!important;
@@ -349,9 +353,10 @@ ul li{
 }
 
 .mealxpress-main{
-    flex: 1;
     padding: 20px;
+    height: 100vh;
     overflow-y: auto;
+    /* padding-bottom: 100px!important; */
     
 }
 .card-main-first{
@@ -629,3 +634,6 @@ ul li{
     border-radius: 12px;
 }
 
+.format-card{
+    border: 1px solid #eee!important;
+}

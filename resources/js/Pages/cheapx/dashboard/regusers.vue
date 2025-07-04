@@ -7,10 +7,12 @@
       <div class="mealxpress-content">
         <HeaderDashboard/>
         <div class="mealxpress-main">
-          <div class="card-general-container card p-2">
-              <div class="card">
-                  <h5 class="card-header"></h5>
-                  <div class="d-flex justify-content-between px-6 me-3 ms-3">
+          <div class="p-1">
+              <div class="car">
+                  <h5 class="card-header mb-4">
+                    Registered Users
+                  </h5>
+                  <div class="d-flex justify-content-between">
                       <div class="d-flex">
                           <div class="form-input">
                               <input type="text" class="form-control py-2" v-model="searchQuery"  placeholder="Search...">
@@ -27,7 +29,7 @@
                           </div> -->
                       </div>
                   </div>
-                  <div class="card-body">
+                  <div class="cx">
                   <div class="table-responsive text-nowrap">
                     <table class="table">
                      <thead>
@@ -56,7 +58,7 @@
                           <td> {{item.contact}}</td>
                           <td><img :src="item.profileimage" style="height: 30px; height:100px"></td>
                           <td><span class="badge bg-label-info me-1">{{item.dob}}</span></td>
-                          <td><span class="fw-bold"> {{item.created_at}}</span></td>
+                          <td>{{  formatDate(item.created_at)}}</td>                         
                           <td>
                     
                   </td>
@@ -128,6 +130,15 @@ export default {
       maximumFractionDigits: 2,
     });
   },
+
+  formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+}
 },
   setup(){
   const { props } = usePage(); 
@@ -148,6 +159,7 @@ export default {
       )
     );
   });
+
 
   const noResults = computed(() => filteredData.value.length === 0);
   const nextPage = () => {

@@ -75,8 +75,9 @@ Route::controller(PostController::class)->group(function () {
     Route::post('/cheapx/auth/updatedata', 'UpdateData');
     Route::post('/cheapx/auth/utility', 'UpdateUtility');
     Route::post('/cheapx/auth/cable', 'UpdateCable');
-    Route::post('/cheapx/auth/sendnotification', 'sendNotification');
+    Route::post('/cheapx/auth/sendnotification', action: 'sendNotification');
     Route::post('/updatedatapackages', 'UpdateDataPackages');
+    Route::post('/updateuzopackage','UpdateUzoBestPackage');
     Route::post('/sendnotification','SendNotification');
 });
 
