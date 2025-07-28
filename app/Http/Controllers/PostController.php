@@ -53,7 +53,7 @@ class PostController extends Controller
         '2Month' => ['60Days', '60'],
         '3Month' => ['90Days', '90'],
         'yearly' => ['365 days', 'a year', 'year'],
-        'cheapy' => ['3 days', '10 days', 'flexi'] // fallback or other edge cases
+        'cheapy' => ['3 days', '10 days', 'flexi'] 
     ];
 
     foreach ($map as $type => $keywords) {
@@ -336,18 +336,17 @@ public function UpdateUzoBestPackage(Request $request)
         ]);
 
     try{
+        
     $validatecheck = Admin::where('email', $request->input(key: 'email'))->first();
-    // dd($validatecheck);
     if($validatecheck && Hash::check($request['password'], $validatecheck->password)){
         // $username = $validatecheck->firstname;
-
         Session::put('userid', $request->input('email'));
         return response()->json(['message' => $request->input('email'), 'status' =>'success']);
     }else{
         return response()->json(['message' => 'Incorrect Details', 'status' => 'error']);
     }
-}catch(\Exception $e){
-    return response()->json(['message' => $e->getMessage()]);
-}
+        }catch(\Exception $e){
+            return response()->json(['message' => $e->getMessage()]);
+        }
     }
-}
+    }

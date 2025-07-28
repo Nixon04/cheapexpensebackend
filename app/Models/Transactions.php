@@ -12,7 +12,7 @@ class Transactions extends Model
     protected $fillable = [
         'username',
          'amount',
-         'type_of_purcahse',
+         'type_of_purchase',
          'sub_type_purchase',
          'data_type',
          'status',

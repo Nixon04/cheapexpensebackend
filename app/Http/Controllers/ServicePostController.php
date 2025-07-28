@@ -5,11 +5,9 @@ use App\Models\AppControlPanelVersion;
 use App\Models\UserDetailsForCard;
 use App\Models\VirtualCardAmounts;
 use App\Models\VirtualCardList;
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\cache;
 use Illuminate\Support\Facades\Http;
 use App\Models\Transactions;
 use App\Models\UserSignup;
@@ -21,7 +19,8 @@ use Illuminate\Routing\Controller;
 use App\Models\EligibleForCard;
 use Illuminate\Support\Facades\Log;
 use App\Models\DataPackList;
-
+use App\Models\PinAttempt;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Http\Client\ConnectionException;
@@ -894,9 +893,9 @@ class ServicePostController extends Controller
           $accountcode = $request['account_code'];
           $cachekey = "{$accountnumber}_{$accountcode}";
 
-          if(Cache::has($cachekey)){
-            return response()->json(Cache::get($cachekey));
-          }
+        //   if(Cache::has($cachekey)){
+        //     return response()->json(Cache::get($cachekey));
+        //   }
 
           $url = "https://api.paystack.co/bank/resolve?account_number=$accountnumber&bank_code=$accountcode";
           $headers = [
@@ -941,7 +940,7 @@ class ServicePostController extends Controller
                 'account_name' => $name,
                 ]
              ];
-             Cache::put($cachekey, $message, now()->addMinutes(30));
+            //  Cache::put($cachekey, $message, now()->addMinutes(30));
             return  response()->json($message);
             }
 
@@ -1344,8 +1343,185 @@ public function fetchCableSubscription(Request $request){
     }
    }
    
-   public function AirtimePurchase(Request $request)
+//    public function AirtimePurchase(Request $request)
+// {
+//     $request->validate([
+//         "username" => 'required|string',
+//         "amount" => 'required|integer|min:10', 
+//         "type_of_purchase" => 'required',
+//         "sub_type_purchase" => 'required',   
+//         "ref_num_purchase" => 'required',
+//         "userpin" => 'required',
+//         "date_of_purchase" => 'required',
+//         "data_type" => 'required',
+//         "reference" => 'required',
+//     ]);  
+
+//     try {
+
+//         DB::beginTransaction();
+//         // Fetch user balance with row-level locking
+//         $check_amount = UserAccountDetails::where('username', $request->input('username'))->first();
+//         if (!$check_amount || $check_amount->user_amount < $request->input('amount')) {
+//             return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
+//         }else{
+//                     $check_amount->update([
+//                     'user_amount' => $check_amount->user_amount - $request->input('amount'),
+//                 ]);
+//         }
+
+//         // Generate unique reference ID
+//         $currentyear = Carbon::now()->timezone('Africa/Lagos')->format('Ymdhi');
+//         $rand_ref = mt_rand(11111111, 99999999);
+//         $generated_reference = $currentyear . $rand_ref;
+
+//         // Validate user PIN
+//         $password_pin_check = UserSignup::where('users_id', $request->input('userpin'))->first();
+//         if (!$password_pin_check) {
+//             return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
+//         }
+
+//         $url = "https://vtpass.com/api/pay";
+//         $headers = [
+//             'api-key' => env('VTPASS_API_KEY'),
+//             'secret-key' => env('VTPASS_SECRET_KEY'),
+//             'accept' => 'application/json',
+//         ];
+
+//         // |unique:transactions,reference
+//             $response = Http::withHeaders($headers)->post($url, [
+//                 'request_id' => $generated_reference,
+//                 'serviceID' => $request->input('sub_type_purchase'),
+//                 'amount' => $request->input('amount'),
+//                 'phone' => $request->input('ref_num_purchase'),
+                
+//             ]);
+
+//             Log::info('Airtime Payloads', ['status' =>  $request,
+//              ]);
+
+//             if ($response->successful() && $response) {
+//                 $status_log = $response->getBody();
+//                 Log::info('AirtimeLog', ['status' => $status_log]);
+//                 $transaction_data = new Transactions();
+//                  $transaction_data->username = $request['username'];
+//                  $transaction_data->amount = $request['amount'];
+//                  $transaction_data->type_of_purchase = $request['type_of_purchase'];
+//                  $transaction_data->sub_type_purchase = $request['sub_type_purchase'];
+//                  $transaction_data->data_type = $request['data_type'];
+//                  $transaction_data->status = $request['status'];
+                 
+//                  $transaction_data->ref_num_purchase = $request['ref_num_purchase'];
+//                  $transaction_data->reference = $request['reference'];
+//                  $transaction_data->date_of_purchase = $request->input('date_of_purchase');
+//                  $transaction_data->save();
+//                   DB::commit();
+
+//                   $token = $password_pin_check->fcmtoken;
+
+//                   $title = "Airtime Package";
+//                   $body = "Sum of" .number_format($request->input('amount'), 2). "was successful.";
+//                   $messaging = app('firebase.messaging');
+//                   $message = CloudMessage::withTarget('token', $token)
+//                    ->withNotification(notification: Notification::create($title, $body));
+
+//                    Log::info('AirtimeLogToken', ['status'=> $message]);
+
+
+//                 return response()->json(['message' => 'success', 'status' => 'success']);
+//             } else {
+//                 DB::rollBack();
+//                 $status_log = $response->getBody();
+//                 Log::info('AirtimeLog', ['status' => $status_log]);
+//                 return response()->json(['message' => 'Airtime subscription failed', 'status' => 'error']);
+//             }
+//         }
+//         catch(ConnectionException $e){
+//             return response()->json([
+//                 'message' => 'Network Error',
+//                 'status' => 'error',
+//             ]);
+//         }
+//         catch (\Exception $e) {
+//             Log::error('Error purchasing airtime: ' . $e->getMessage());
+//             return response()->json(['message' => 'An error occurred', 'status' => 'error']);
+//         }
+    
+// }
+    
+
+
+private function RetryPasswordLock($username, $count)
 {
+    $querycheck = PinAttempt::where('user_id', $username)->first();
+
+    if ($querycheck) {
+        // check if lock time has passed
+        if ($querycheck->attempt >= $count) {
+            $lockExpires = Carbon::parse($querycheck->last_attempt_at)->addMinutes(5);
+
+            if (now()->lessThan($lockExpires)) {
+                // still locked
+                return response()->json([
+                    'message' => 'Account is Locked for 5 Minutes',
+                    'status' => 'error',
+                ]);
+            } else {
+                // lock expired → reset attempts
+                $querycheck->update([
+                    'attempt' => 0,
+                    'last_attempt_at' => now(),
+                ]);
+            }
+        }
+
+        // if attempts not yet exhausted, increment
+        $countid = 1;
+        $querycheck->update([
+            'attempt' => $querycheck->attempt + $countid,
+            'last_attempt_at' => now(),
+        ]);
+
+        $remaining = $count - $querycheck->attempt - 1;
+        return response()->json([
+            'message' => 'Password failed, you have ' . max($remaining, 0) . ' attempts left',
+            'status' => 'error',
+        ]);
+    } else {
+        // first failed attempt
+        $retryinsert = PinAttempt::create([
+            'user_id' => $username,
+            'attempt' => 1,
+            'last_attempt_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Wrong Password, you have ' . ($count - 1) . ' more retries',
+            'status' => 'error',
+        ]);
+    }
+}
+
+
+
+public function AirtimePurchase(Request $request)
+{
+
+    $key = 'global_airtime_requests';
+    $limit = 10;
+    $decay = 60; // seconds
+
+    $count = Cache::get($key, 0);
+
+    if ($count >= $limit) {
+        return response()->json([
+            'message' => 'Couldn\'t make purchase, please try again.',
+            'status' => 'error',
+        ], 429);
+    }
+
+    Cache::put($key, $count + 1, now()->addSeconds($decay));
+
     $request->validate([
         "username" => 'required|string',
         "amount" => 'required|integer|min:10', 
@@ -1358,85 +1534,139 @@ public function fetchCableSubscription(Request $request){
         "reference" => 'required',
     ]);  
 
-    try {
 
-        DB::beginTransaction();
-        // Fetch user balance with row-level locking
-        $check_amount = UserAccountDetails::where('username', $request->input('username'))->first();
-        if (!$check_amount || $check_amount->user_amount < $request->input('amount')) {
-            return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
-        }else{
-                    $check_amount->update([
-                    'user_amount' => $check_amount->user_amount - $request->input('amount'),
-                ]);
-        }
+        $username = $request->input('username');
+        $amount = $request->input('amount');
+        $userpin = $request->input('userpin');
+        $reference = $request->input('reference');
 
-        // Generate unique reference ID
-        $currentyear = Carbon::now()->timezone('Africa/Lagos')->format('Ymdhi');
-        $rand_ref = mt_rand(11111111, 99999999);
-        $generated_reference = $currentyear . $rand_ref;
-
-        // Validate user PIN
-        $password_pin_check = UserSignup::where('users_id', $request->input('userpin'))->first();
-        if (!$password_pin_check) {
-            return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
-        }
-
-        $url = "https://vtpass.com/api/pay";
-        $headers = [
-            'api-key' => env('VTPASS_API_KEY'),
-            'secret-key' => env('VTPASS_SECRET_KEY'),
-            'accept' => 'application/json',
-        ];
-
-        // |unique:transactions,reference
-            $response = Http::withHeaders($headers)->post($url, [
-                'request_id' => $generated_reference,
-                'serviceID' => $request->input('sub_type_purchase'),
-                'amount' => $request->input('amount'),
-                'phone' => $request->input('ref_num_purchase'),
-                
+        if(Transactions::where('reference', $reference)->exists()){
+            return response()->json([
+                'message' => 'Duplicated Transaction Id',
+                'status' => 'error',
             ]);
-
-            Log::info('Airtime Payloads', ['status' =>  $request,
-             ]);
-
-            if ($response->successful() && $response) {
-                $status_log = $response->getBody();
-                Log::info('AirtimeLog', ['status' => $status_log]);
-                $transaction_data = new Transactions();
-                 $transaction_data->username = $request['username'];
-                 $transaction_data->amount = $request['amount'];
-                 $transaction_data->type_of_purchase = $request['type_of_purchase'];
-                 $transaction_data->sub_type_purchase = $request['sub_type_purchase'];
-                 $transaction_data->data_type = $request['data_type'];
-                 $transaction_data->status = $request['status'];
-                 
-                 $transaction_data->ref_num_purchase = $request['ref_num_purchase'];
-                 $transaction_data->reference = $request['reference'];
-                 $transaction_data->date_of_purchase = $request->input('date_of_purchase');
-                 $transaction_data->save();
-                  DB::commit();
-
-                  $token = $password_pin_check->fcmtoken;
-
-                  $title = "Airtime Package";
-                  $body = "Sum of" .number_format($request->input('amount'), 2). "was successful.";
-                  $messaging = app('firebase.messaging');
-                  $message = CloudMessage::withTarget('token', $token)
-                   ->withNotification(notification: Notification::create($title, $body));
-
-                   Log::info('AirtimeLogToken', ['status'=> $message]);
-
-
-                return response()->json(['message' => 'success', 'status' => 'success']);
-            } else {
-                DB::rollBack();
-                $status_log = $response->getBody();
-                Log::info('AirtimeLog', ['status' => $status_log]);
-                return response()->json(['message' => 'Airtime subscription failed', 'status' => 'error']);
-            }
         }
+
+        $lockdatereload = Transactions::where('username', $username)
+        ->where('created_at', '>=', now()->subSeconds(20))->first();
+        if($lockdatereload){
+            return response()->json([
+                'message' => 'Network Error, please try again',
+                'status' => 'error',
+            ]);
+        }
+
+
+        $count_timer = 3;
+        $userpin = UserSignup::where('users_id', $userpin)->first();
+        if(!$userpin){
+           return $this->RetryPasswordLock($request->input('username'), $count_timer);
+        }
+
+                    
+            try {
+                        DB::beginTransaction();
+                
+                        // Check duplicate reference
+                        if (Transactions::where('reference', $request->input('reference'))->exists()) {
+                   
+                            DB::rollBack();
+                            Log::warning('Duplicate reference detected', [
+                                'username' => $username,
+                                'reference' => $request->input('reference'),
+                            ]);
+                            return response()->json(['message' => 'Duplicated transaction', 'status' => 'error'], 400);
+                        }
+                
+                        // Check PIN
+                        $user = UserSignup::where('users_id', $request->input('userpin'))->first();
+                        if (!$user) {
+                         
+                            DB::rollBack();
+                            Log::warning('Incorrect PIN', ['username' => $username]);
+                            return response()->json(['message' => 'Incorrect PIN', 'status' => 'error'], 400);
+                        }
+                
+                        // Lock and check balance
+                        $account = UserAccountDetails::where('username', $username)
+                            ->lockForUpdate()
+                            ->first();
+                
+                        if (!$account || $account->user_amount < $request->input('amount')) {
+                          
+                            DB::rollBack();
+                            Log::warning('Insufficient balance', [
+                                'username' => $username,
+                                'amount' => $request->input('amount'),
+                            ]);
+                            return response()->json(['message' => 'Insufficient Balance', 'status' => 'error'], 400);
+                        }
+                
+                        // Deduct balance
+                        $account->user_amount -= $request->input('amount');
+                        $account->save();
+                
+                        // Generate VTpass request ID
+                        $generated_reference = Carbon::now()->timezone('Africa/Lagos')->format('YmdHisv') . mt_rand(10000000, 99999999); // Include milliseconds
+                
+                        // VTPass API call
+                        $response = Http::withHeaders([
+                            'api-key' => env('VTPASS_API_KEY'),
+                            'secret-key' => env('VTPASS_SECRET_KEY'),
+                            'accept' => 'application/json',
+                        ])->post("https://vtpass.com/api/pay", [
+                            'request_id' => $request->input('reference'),
+                            'serviceID' => $request->input('sub_type_purchase'),
+                            'amount' => $request->input('amount'),
+                            'phone' => $request->input('ref_num_purchase'),
+                        ]);
+                
+                        Log::info('Airtime Payload', [
+                            'request' => $request->all(),
+                            'generated_reference' => $request->input('reference'),
+                            'ip' => $request->ip(),
+                        ]);
+                
+                        if ($response->successful() && isset($response->json()['code']) && $response->json()['code'] === '000') {
+                            // Save transaction
+                            Transactions::create([
+                                'username' => $username,
+                                'amount' => $request->input('amount'),
+                                'type_of_purchase' => $request->input('type_of_purchase'),
+                                'sub_type_purchase' => $request->input('sub_type_purchase'),
+                                'data_type' => $request->input('data_type'),
+                                'status' => 'success',
+                                'ref_num_purchase' => $request->input('ref_num_purchase'),
+                                'reference' => $request->input('reference'), // Use server-generated reference
+                                'date_of_purchase' => $request->input('date_of_purchase'),
+                            ]);
+                
+                            Log::info('Airtime VTpass Response', ['body' => $response->body()]);
+                
+                            DB::commit();
+                         
+                            return response()->json(['message' => 'success', 'status' => 'success'], 200);
+                        } else {
+                        
+                            DB::rollBack();
+                            Log::info('Airtime VTpass Failed', ['body' => $response->body()]);
+                            return response()->json(['message' => 'Airtime subscription failed', 'status' => 'error'], 400);
+                        }
+                    } catch (ConnectionException $e) {
+                   
+                        DB::rollBack();
+                        Log::error('Network Error: ' . $e->getMessage());
+                        return response()->json(['message' => 'Network Error', 'status' => 'error'], 500);
+                    } catch (\Throwable $e) {
+                   
+                        DB::rollBack();
+                        Log::error('Airtime Error: ' . $e->getMessage(), [
+                            'username' => $username,
+                            'ip' => $request->ip(),
+                        ]);
+                        return response()->json(['message' => 'An error occurred', 'status' => 'error'], 500);
+                    }
+
         catch(ConnectionException $e){
             return response()->json([
                 'message' => 'Network Error',
@@ -1450,6 +1680,185 @@ public function fetchCableSubscription(Request $request){
     
 }
     
+
+// public function AirtimePurchase(Request $request)
+// {
+//     // Validate request
+//     $request->validate([
+//         'username' => 'required|string',
+//         'amount' => 'required|integer|min:10',
+//         'type_of_purchase' => 'required',
+//         'sub_type_purchase' => 'required',
+//         'ref_num_purchase' => 'required',
+//         'userpin' => 'required',
+//         'date_of_purchase' => 'required',
+//         'data_type' => 'required',
+//         'reference' => 'required',
+//     ]);
+
+ 
+    
+//     $username = $request->input('username');
+//     $rateKey = 'airtime_' . $username . '_' . $request->ip(); // Include IP for stricter limiting
+
+//     // Check for recent transactions (timing validation)
+//     $lastTransaction = Transactions::where('username', $username)
+//         ->where('created_at', '>=', now()->subSeconds(5))
+//         ->first();
+//     if ($lastTransaction) {
+//         Log::warning('Concurrent transaction attempt blocked', [
+//             'username' => $username,
+//             'ip' => $request->ip(),
+//             'time' => now(),
+//         ]);
+//         return response()->json(['message' => 'Please wait 5 seconds before making another purchase', 'status' => 'error'], 429);
+//     }
+
+//     // Rate limiter (apply before lock to reduce load)
+//     if (RateLimiter::tooManyAttempts($rateKey, 1)) {
+//         Log::warning('Rate limit exceeded', [
+//             'username' => $username,
+//             'ip' => $request->ip(),
+//             'time' => now(),
+//         ]);
+//         return response()->json(['message' => 'Too many requests, please wait', 'status' => 'error'], 429);
+//     }
+//     RateLimiter::hit($rateKey, 10); // Hit immediately, 1 request per 10 seconds
+
+
+//     // Check for recent transactions (timing validation)
+//     $lastReference = Transactions::where('reference', $request->input('reference'))->first();
+//     if($lastReference){
+//      return response()->json(['message' => 'Duplicated Transaction','status' => 'error']);
+//     }
+
+//     // Acquire Redis lock
+//     $lockKey = 'airtime_lock_' . $username;
+//     $lock = Cache::lock($lockKey, 5); // 5-second lock to minimize window
+//     if (!$lock->get()) {
+//         Log::warning('Redis lock acquisition failed', [
+//             'username' => $username,
+//             'ip' => $request->ip(),
+//             'time' => now(),
+//         ]);
+//         return response()->json(['message' => 'Another transaction is in progress', 'status' => 'error'], 429);
+//     }
+
+//     if (Transactions::where('reference', $request->input('reference'))->exists()) {
+//      $lock->release();
+//      DB::rollBack();
+//      Log::warning('Duplicate reference detected', [
+//          'username' => $username,
+//          'reference' => $request->input('reference'),
+//      ]);
+//      return response()->json(['message' => 'Duplicated transaction', 'status' => 'error'], 400);
+//  }
+
+//     try {
+//         DB::beginTransaction();
+
+//         // Check duplicate reference
+//         if (Transactions::where('reference', $request->input('reference'))->exists()) {
+//             $lock->release();
+//             DB::rollBack();
+//             Log::warning('Duplicate reference detected', [
+//                 'username' => $username,
+//                 'reference' => $request->input('reference'),
+//             ]);
+//             return response()->json(['message' => 'Duplicated transaction', 'status' => 'error'], 400);
+//         }
+
+//         // Check PIN
+//         $user = UserSignup::where('users_id', $request->input('userpin'))->first();
+//         if (!$user) {
+//             $lock->release();
+//             DB::rollBack();
+//             Log::warning('Incorrect PIN', ['username' => $username]);
+//             return response()->json(['message' => 'Incorrect PIN', 'status' => 'error'], 400);
+//         }
+
+//         // Lock and check balance
+//         $account = UserAccountDetails::where('username', $username)
+//             ->lockForUpdate()
+//             ->first();
+
+//         if (!$account || $account->user_amount < $request->input('amount')) {
+//             $lock->release();
+//             DB::rollBack();
+//             Log::warning('Insufficient balance', [
+//                 'username' => $username,
+//                 'amount' => $request->input('amount'),
+//             ]);
+//             return response()->json(['message' => 'Insufficient Balance', 'status' => 'error'], 400);
+//         }
+
+//         // Deduct balance
+//         $account->user_amount -= $request->input('amount');
+//         $account->save();
+
+//         // Generate VTpass request ID
+//         $generated_reference = Carbon::now()->timezone('Africa/Lagos')->format('YmdHisv') . mt_rand(10000000, 99999999); // Include milliseconds
+
+//         // VTPass API call
+//         $response = Http::withHeaders([
+//             'api-key' => env('VTPASS_API_KEY'),
+//             'secret-key' => env('VTPASS_SECRET_KEY'),
+//             'accept' => 'application/json',
+//         ])->post("https://vtpass.com/api/pay", [
+//             'request_id' => $request->input('reference'),
+//             'serviceID' => $request->input('sub_type_purchase'),
+//             'amount' => $request->input('amount'),
+//             'phone' => $request->input('ref_num_purchase'),
+//         ]);
+
+//         Log::info('Airtime Payload', [
+//             'request' => $request->all(),
+//             'generated_reference' => $request->input('reference'),
+//             'ip' => $request->ip(),
+//         ]);
+
+//         if ($response->successful() && isset($response->json()['code']) && $response->json()['code'] === '000') {
+//             // Save transaction
+//             Transactions::create([
+//                 'username' => $username,
+//                 'amount' => $request->input('amount'),
+//                 'type_of_purchase' => $request->input('type_of_purchase'),
+//                 'sub_type_purchase' => $request->input('sub_type_purchase'),
+//                 'data_type' => $request->input('data_type'),
+//                 'status' => 'success',
+//                 'ref_num_purchase' => $request->input('ref_num_purchase'),
+//                 'reference' => $request->input('reference'), // Use server-generated reference
+//                 'date_of_purchase' => $request->input('date_of_purchase'),
+//             ]);
+
+//             Log::info('Airtime VTpass Response', ['body' => $response->body()]);
+
+//             DB::commit();
+//             $lock->release();
+//             return response()->json(['message' => 'success', 'status' => 'success'], 200);
+//         } else {
+//             $lock->release();
+//             DB::rollBack();
+//             Log::info('Airtime VTpass Failed', ['body' => $response->body()]);
+//             return response()->json(['message' => 'Airtime subscription failed', 'status' => 'error'], 400);
+//         }
+//     } catch (ConnectionException $e) {
+//         $lock->release();
+//         DB::rollBack();
+//         Log::error('Network Error: ' . $e->getMessage());
+//         return response()->json(['message' => 'Network Error', 'status' => 'error'], 500);
+//     } catch (\Throwable $e) {
+//         $lock->release();
+//         DB::rollBack();
+//         Log::error('Airtime Error: ' . $e->getMessage(), [
+//             'username' => $username,
+//             'ip' => $request->ip(),
+//         ]);
+//         return response()->json(['message' => 'An error occurred', 'status' => 'error'], 500);
+//     }
+// }
+
+
 public function NewDataPurchase(Request $request){
     $request->validate([
         "username" => "required",
@@ -1574,128 +1983,165 @@ catch(\Exception $e){
     
 }
  
-    public function DataPurchase(Request $request){
-        $request->validate([
-            "username" => "required",
-            "amount" => 'required|integer|min:1',
-            "type_of_purchase" => "required",
-            "data_type" => 'required',
-            "status" => 'required',
-            "userpin" => 'required',
-            "ref_num_purchase" => 'required',
-            "date_of_purchase" => 'required',
-            "reference" => 'required|unique:transactions,reference',
-            "network_id" => "required",
-            "plan" => "required",
-        ]);
+    
+public function DataPurchase(Request $request){
+    $request->validate([
+        "username" => "required",
+        "amount" => 'required|integer|min:1',
+        "type_of_purchase" => "required",
+        "data_type" => 'required',
+        "status" => 'required',
+        "userpin" => 'required',
+        "ref_num_purchase" => 'required',
+        "date_of_purchase" => 'required',
+        "reference" => 'required',
+        "network_id" => 'required',
+        "plan" => "required",
+    ]);
 
-        try{
+    
+          
+    $key = 'global_data_requests';
+    $limit = 2;
+    $decay = 60; // seconds
 
-       DB::beginTransaction();
+    $count = Cache::get($key, 0);
 
-
-       $dusername = $request->input('username');
-       $damount = $request->input('amount');
-       $dtypeofpurchase = $request->input('type_of_purchase');
-       $dsubtypepurchase = $request->input('sub_type_purchase');
-       $ddatatype = $request->input('data_type');
-       $dstatus = $request->input('status');
-       $drefnumpurchase = $request->input('ref_num_purchase');
-       $dreference = $request->input('reference');
-       $ddateofpurchase = $request->input('date_of_purchase');
-
-       $password_pin_check = UserSignup::where('users_id', $request['userpin'])->first();
-       if(!$password_pin_check){
-          return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
-       }
-       $check_amount = UserAccountDetails::where('username', $request['username'])->first();
-       
-          if ($request['amount'] <= 0 || $check_amount->user_amount < $request['amount']) {
-        return response()->json(['message' => 'Invalid or Insufficient Balance', 'status' => 'error']);
-        }
-        
-         else{
-          $new_amount = $check_amount->user_amount - $request['amount'];
-          $check_amount->update(['user_amount' => $new_amount]);
-       }
-
-
-        $url="https://uzobestgsm.com/api/data/";
-        $headers = [
-            'Authorization' => "Token ".env('UZOBEST_KEY'),
-            "accept" => "application/json",
-        ];
-
-        $networkMap = [
-            'MTN' => 1,
-            'AIRTEL' => 4,
-            'GLO' =>2,
-            '9MOBILE' => 3,
-        ];
-        
-        $networkKey = strtoupper(trim($request->input('network_id')));
-        if (!isset($networkMap[$networkKey])) {
-            return response()->json(['message' => 'Invalid network type', 'status' => 'error']);
-        }
-        $networkId = $networkMap[$networkKey];
-
-
-        $requestDataCall = Http::withHeaders($headers)->post($url,[
-            "network" => $networkId,
-            "mobile_number" => $request->input(key: 'ref_num_purchase'),
-            "plan" => $request->input('plan'),
-            "Ported_number" =>  "true",
-        ]);
-
-        if($requestDataCall->successful() && $requestDataCall){
-
-            $requestdata = $requestDataCall->getbody();
-            $messagedecode = json_decode($requestdata);
-            $status =  $messagedecode->Status;
-            $uzoreference = $messagedecode->ident;
-
-            DB::commit();
-
-            $transaction_data = new Transactions();
-            $transaction_data->username = $dusername;
-            $transaction_data->amount = $damount;
-            $transaction_data->type_of_purchase = $dtypeofpurchase;
-            $transaction_data->sub_type_purchase = $dsubtypepurchase;
-            $transaction_data->data_type = $ddatatype;
-            $transaction_data->status = $dstatus;
-            $transaction_data->ref_num_purchase = $drefnumpurchase;
-            $transaction_data->reference = $dreference;
-            $transaction_data->date_of_purchase = $ddateofpurchase;
-            $transaction_data->save();
-
-            Log::info('datapurchase Line for successful page', ['reference' =>  $dreference]);
-
-            if($transaction_data){
-                return response()->json(['message' => $status, 'status' => 'success']);
-            }
-            
-        }
-        else{  
-            if($requestDataCall->getStatusCode() == "400"){
-                Log::info('LogDataPurchase', ['status' => $requestDataCall->body()]);
-                $return_amount = UserAccountDetails::where('username', $request['username'])->first();
-                  if($return_amount){
-                      $initial_amount = $return_amount->user_amount;
-                      $totalremainingsum = $initial_amount + $request->input('amount');
-                      $return_amount->update(['user_amount' =>$totalremainingsum]);
-                  }
-                return response()->json(['message' => 'Current Package not available', 'status' => 'error']);
-            }
-         return response()->json(['message' => 'not successful', 'status' => 'false']);
-        }
-
-    }catch(\Exception $e){
-        Log::info('DataPurchase Error Catch', ['status' => $e->getMessage(), 'line' => $e->getLine()]);
-        DB::rollBack();
-        return response()->json(['message' => 'Oops something went wrong, try again later','status' =>'error', 'log' => $e->getMessage()]);
+    if ($count >= $limit) {
+        return response()->json([
+            'message' => 'Couldn\'t make purchase, please try again.',
+            'status' => 'error',
+        ], 429);
     }
         
+
+   
+    if(Transactions::where('reference', $request->input('reference'))->exists()) {
+        return response()->json(['message' => 'Duplicate transaction', 'status' => 'error']);
+        }
+        
+        
+           $check_amount = UserAccountDetails::where('username', $request['username'])->first();
+   
+      if ($request['amount'] <= 0 || $check_amount->user_amount < $request['amount']) {
+    return response()->json(['message' => 'Insufficient Balance', 'status' => 'error']);
     }
+    
+     else{
+      $new_amount = $check_amount->user_amount - $request['amount'];
+      $check_amount->update(['user_amount' => $new_amount]);
+  }
+  
+
+    try{
+        
+            DB::beginTransaction();
+
+   $dusername = $request->input('username');
+   $damount = $request->input('amount');
+   $dtypeofpurchase = $request->input('type_of_purchase');
+   $dsubtypepurchase = $request->input('sub_type_purchase');
+   $ddatatype = $request->input('data_type');
+   $dstatus = $request->input('status');
+   $drefnumpurchase = $request->input('ref_num_purchase');
+   $dreference = $request->input('reference');
+   $ddateofpurchase = $request->input('date_of_purchase');
+
+   $password_pin_check = UserSignup::where('users_id', $request['userpin'])->lockForUpdate()->first();
+
+
+   if(!$password_pin_check){
+      return response()->json(['message' => 'Incorrect PIN', 'status' => 'error']);
+   }
+  
+
+
+    $url="https://uzobestgsm.com/api/data/";
+    $headers = [
+        'Authorization' => "Token ".env('UZOBEST_KEY'),
+        "accept" => "application/json",
+    ];
+
+    $networkMap = [
+        'MTN' => 1,
+        'AIRTEL' => 4,
+        'GLO' =>2,
+        '9MOBILE' => 3,
+    ];
+    
+    $networkKey = strtoupper(trim($request->input('network_id')));
+    if (!isset($networkMap[$networkKey])) {
+        return response()->json(['message' => 'Invalid network type', 'status' => 'error']);
+    }
+    $networkId = $networkMap[$networkKey];
+
+
+    $requestDataCall = Http::withHeaders($headers)->post($url,[
+        "network" => $networkId,
+        "mobile_number" => $request->input('ref_num_purchase'),
+        "plan" => $request->input('plan'),
+        "Ported_number" =>  "false",
+    ]);
+
+    if($requestDataCall->successful() && $requestDataCall){
+
+        $requestdata = $requestDataCall->getbody();
+        $messagedecode = json_decode($requestdata);
+        $status =  $messagedecode->Status;
+        $uzoreference = $messagedecode->ident;
+
+        $transaction_data = new Transactions();
+        $transaction_data->username = $dusername;
+        $transaction_data->amount = $damount;
+        $transaction_data->type_of_purchase = $dtypeofpurchase;
+        $transaction_data->sub_type_purchase = $dsubtypepurchase;
+        $transaction_data->data_type = $ddatatype;
+        $transaction_data->status = $dstatus;
+        $transaction_data->ref_num_purchase = $drefnumpurchase;
+        $transaction_data->reference = $dreference;
+        $transaction_data->date_of_purchase = $ddateofpurchase;
+        $transaction_data->save();
+
+        Log::info('datapurchase Line for successful page', ['reference' =>  $dreference]);
+        
+        DB::commit();
+
+
+        if($transaction_data){
+            return response()->json(['message' => $status, 'status' => 'success']);
+        }
+        
+    }
+    else{  
+        if($requestDataCall->getStatusCode() == "400"){
+            Log::info('LogDataPurchase', ['status' => $requestDataCall->body()]);
+            $return_amount = UserAccountDetails::where('username', $request['username'])->first();
+              if($return_amount){
+                  $initial_amount = $return_amount->user_amount;
+                  $totalremainingsum = $initial_amount + $request->input('amount');
+                  $return_amount->update(['user_amount' =>$totalremainingsum]);
+              }
+            return response()->json(['message' => 'Current Package not available', 'status' => 'error']);
+        }
+     return response()->json(['message' => 'not successful', 'status' => 'false']);
+    }
+
+}
+
+catch (ConnectionException $e) {
+DB::rollBack();
+return response()->json(['message' => 'Network connection issue', 'status' => 'error']);
+}
+
+
+catch(\Exception $e){
+    Log::info('DataPurchase Error Catch', ['status' => $e->getMessage(), 'line' => $e->getLine()]);
+    DB::rollBack();
+    return response()->json(['message' => 'Oops something went wrong, try again later','status' =>'error', 'log' => $e->getMessage(), 'line' => $e->getLine()]);
+}
+    
+}
+
 
     public function CablePurchase(Request $request){
         $request->validate([

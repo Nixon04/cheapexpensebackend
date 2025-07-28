@@ -1,18 +1,18 @@
 <template>
   <div class="main-content">
   <NavBarBody/>
-    <div class="main-body-content bg-main-color">
+    <div class="main-body-content g-main-color" style="height: 100vh!important; overflow:auto">
     
-      <div class="text-center position-relative">
-        <div class="bg-header-privacy">
+      <div class="text-center position-relativ" >
+        <div class="bg-header-privacy" >
           <h1 class="fs-1">Privacy Rules</h1>
         </div>
       </div>
-      <div class="d-flex hero-pad-content p-4 bg-main-color">
+      <div class="d-flex hero-pad-content bg-dark p-4 ">
         <div class="privacy-contents w-100">
 
          <div class="div-content-paddings mb-5">
-          <div class="med-contents">
+          <div class="med-content">
               <h1 class="fs-1">1. INTRODUCTION</h1>
               <h6> 1.0. CheapExpense is a platform that provides users with a seamless and convenient way to manage their daily expenses, pay bills, purchase airtime, data subscriptions, electricity, and other services. CheapExpense is operated and owned by Cheapexpense, whose registered address is 35 Dawari, Ada George, Port Harcourt. Rivers State</h6>
           </div>

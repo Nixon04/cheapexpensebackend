@@ -352,7 +352,7 @@ public function ReferralLink(Request $request){
 
         $checkstatusdeletecall = DeactivateAccount::where('username', $request['username'])->first();
         if($checkstatusdeletecall){
-          return response()->json(['message' => 'Incorrect details']);
+          return response()->json(['message' => 'Account is Disabled']);
         }
 
         $validatecheck = UserSignup::where('username', $request->input('username'))->orWhere('email', $request->input('username'))->first();
@@ -362,7 +362,9 @@ public function ReferralLink(Request $request){
             }else{
                 return response()->json(['message' => 'sorry we couldn\'t validate your response', 'status' => 'failed']);
             }
-        }catch(\Exception $e){
+        }
+        catch(\Exception $e){
+           Log::info('LoginControllerForUsers', ['status' => $e->getMessage(), 'lines' => $e->getLine() ]);
           return response()->json([$e->getMessage()]);
         }
     }
