@@ -1,7 +1,7 @@
 <template>
   <div class="main-content">
   <NavBarBody/>
-    <div class="main-body-content g-main-color" style="height: 100vh!important; overflow:auto">
+    <div class="main-bod-content g-main-color" style="height: 100vh!important; overflow:auto">
     
       <div class="text-center position-relativ" >
         <div class="bg-header-privacy" >

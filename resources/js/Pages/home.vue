@@ -232,11 +232,21 @@
               </span>
 
 
-              <span class="fw-bold text-dark text-center">
-                <a href="https://osarotechlimited.com" class="text-decoration-underline text-dark">
-                  Powered by: OsaroTechLimited
-                </a>
-              </span>
+              <div class="mb-5">
+                <span class="fw-bold text-dark text-center">
+                  <a href="https://osarotechlimited.com" class="text-decoration-underline text-dark">
+                    Powered by: OsaroTechLimited
+                  </a>
+                </span>
+              </div>
+
+              <div class="mb-5">
+                <span class="fw-bold text-dark text-center">
+                  <Link href="/privacy" class="text-decoration-underline text-dark">
+                   Our Privacy & Terms and Conditions
+                  </Link>
+                </span>
+              </div>
 
 
             </div>
