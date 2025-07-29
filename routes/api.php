@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\APIControllerBackend;
 use App\Http\Controllers\ServicePostController;
 use App\Http\Controllers\Webhook;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 
 // $image = $request->file('productImage');
 // $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
@@ -63,7 +64,7 @@ Route::prefix('')->group(callback: function(){
 
 //    service Controller BOth Post and Get Request 
    Route::controller(ServicePostController::class)->group(function(){
-    Route::post('purchaseairtime',  'AirtimePurchase');
+    Route::post('purchaseairtime',  'AirtimePurchase')->middleware('throttle:4,0.5');
     Route::post('purchasedata',  'DataPurchase');
     Route::post('newpurchasedata', 'NewDataPurchase');
 
